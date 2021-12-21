@@ -1,0 +1,17 @@
+Scenarios:
+* client signs up to server and uploads empty folder. (WALKING SKELETON) and monitor for changes.
+* client signs up to server and uploads folder with files + empty folders.
+* client signs up to server and uploads folder with files + non-empty folders.
+* client signs up to server and send updates about creation of file
+* client signs up to server and send updates about creation of folder.
+* client signs up to server and send updates about deletion of file
+* client signs up to server and send updates about deletion of empty-folder.
+* client signs up to server and send updates about deletion of non-empty folder.
+* client signs up to server and send updates about moving a file.
+* client signs up to server and send updates about moving an empty folder.
+* client signs up to server and send updates about moving a non-empty folder.
+
+* multiple devices.
+
+Later:
+* raise expection when input arguments aren't valid.
