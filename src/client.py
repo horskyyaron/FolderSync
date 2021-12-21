@@ -4,20 +4,32 @@ from src.utils import ConnectionSystem
 
 
 class FolderMonitor:
-    pass
+    def __init__(self, folder):
+        self.folder = folder
+
+    def start(self):
+        pass
 
 
 class TCPClient(ConnectionSystem):
-    def __init__(self, server_ip, server_port):
-        self.server_ip = server_ip
-        self.server_port = server_port
+    def __init__(self, params, monitor):
+        self.params = params
+        self.monitor = monitor
+        self.connection = None
 
     def signup(self, serverIp, serverPort):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((serverIp, serverPort))
+        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connection.connect((serverIp, serverPort))
 
     def startMonitoring(self):
-        pass
+        self.monitor.start()
+
+    def shutdown(self):
+        try:
+            self.connection.close()
+        except Exception:
+            print("oops")
+
     
     
 

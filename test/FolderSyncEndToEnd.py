@@ -19,6 +19,10 @@ class FakeTCPServer(TCPServer):
         server.listen(5)
         client_socket, client_address = server.accept()
         print("[FAKE SERVER]: client connected!")
+        client_socket.close()
+        print("[FAKE SERVER]: closing client socket")
+        print("[FAKE SERVER]: closing server.")
+        server.close()
 
 
     def run(self):
@@ -29,22 +33,26 @@ class FakeTCPServer(TCPServer):
         daemon.start()
 
 
-
 class FakeFolderMonitor(FolderMonitor):
-    def __init__(self, path):
-        self.folderPath = path
+    def start(self):
+        print("[MONITOR]: monitoring folder")
 
 
 class MyTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.serverPort = 8080
+
     def test_FolderSyncEndToEnd(self):
-        server = FakeTCPServer(12345)
+        server = FakeTCPServer(self.serverPort)
         server.run()
         time.sleep(1)
         params = ["127.0.0.1", "12345", "some path", "some interval"]
         client = TCPClient(params, FakeFolderMonitor("somePath"))
-        client.signup("127.0.0.1", 12345)
+        client.signup("127.0.0.1", self.serverPort)
+        time.sleep(1)
         client.startMonitoring()
+        client.shutdown()
 
 
 if __name__ == '__main__':
