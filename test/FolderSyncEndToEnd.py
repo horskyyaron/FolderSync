@@ -1,12 +1,17 @@
 import threading
 from time import sleep
 import unittest
+from hamcrest import *
 
 from src.client import *
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8080
+SERVER_PORT = 8082
+
+
+class FakeRequestHandler:
+    pass
 
 
 class FakeTCPServer(TCPServer):
@@ -14,6 +19,8 @@ class FakeTCPServer(TCPServer):
     def __init__(self, port):
         super().__init__(port)
         self.stop = False
+        self.response = None
+        self.requestHandler = FakeRequestHandler()
 
     def start_server(self):
         print("thread:", threading.currentThread())
@@ -21,12 +28,18 @@ class FakeTCPServer(TCPServer):
         server.bind(('', self.port))
         print("[FAKE SERVER]: started. listening on port", self.port)
         server.listen(5)
-        server.settimeout(0.5)
+        server.settimeout(10)
 
         while not self.stop:
             try:
                 client_socket, client_address = server.accept()
                 print("[FAKE SERVER]: client connected!")
+                print("[FAKE SERVER]: waiting for client request")
+                client_socket.recv(1024).decode('utf-8')
+                print("[FAKE SERVER]: registering client, sending access token")
+                client_socket.send(b"123")
+                print("[FAKE SERVER]: downloading client folder...")
+                self.response = client_socket.recv(1024).decode('utf-8')
                 client_socket.close()
                 print("[FAKE SERVER]: closing client socket")
             except socket.timeout:
@@ -47,9 +60,9 @@ class FakeTCPServer(TCPServer):
 
 
 class FakeFolderMonitor:
-    def __init__(self, folder):
+    def __init__(self, folder, eventHandler):
         self.folder = folder
-        self.eventHandler = EventHandler()
+        self.eventHandler = eventHandler
 
     def monitorOnDifThread(self):
         print("thread:", threading.currentThread())
@@ -88,23 +101,25 @@ class MyTestCase(unittest.TestCase):
         self.server.run()
         sleep(0.1)
 
-    def test_FolderSyncEndToEnd(self):
-        params = ["127.0.0.1", str(SERVER_PORT), "some path", "some interval"]
-        client = TCPClient(params, FakeFolderMonitor(DIR_PATH))
+
+
+
+    def test_FolderSyncEndToEnd_signup_and_get_access_token(self):
+        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
+        client = TCPClient(params, None)
         client.signup()
         sleep(0.1)
-        client.startMonitoring()
-        sleep(0.1)
         client.shutdown()
+        assert_that(client.accessToken, equal_to("123"))
 
     def test_uploadingEmptyFolderToServer(self):
-        params = ["127.0.0.1", str(SERVER_PORT), "some path", "some interval"]
-        client = TCPClient(params, FakeFolderMonitor(DIR_PATH))
+        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
+        client = TCPClient(params, None)
         client.signup()
-        sleep(0.1)
-        client.startMonitoring()
+        client.uploadFolder()
         sleep(0.1)
         client.shutdown()
+        assert_that(self.server.response, is_("sent folder"))
 
     @classmethod
     def tearDownClass(self):

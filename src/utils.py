@@ -1,11 +1,13 @@
+REGISTER = "register"
+
+
 class ConnectionSystem:
-    def send(self, to):
-        pass
+    def __init__(self):
+        self.connection = None
 
-    def read(self, fromWho):
-        pass
+    def send(self, data):
+        self.connection.send(bytes(data, 'utf-8'))
 
-
-
-
-
+    def read(self):
+        respond = self.connection.recv(1024).decode('utf-8')
+        return respond
