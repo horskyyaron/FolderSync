@@ -1,44 +1,39 @@
 from time import sleep
 import unittest
 from hamcrest import *
-
 from src.client import *
-from src.server import TCPServer
-from testUtil import FakeTCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8083
+SERVER_PORT = 8088
 
 
 class MyTestCase(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(self):
-        self.server = FakeTCPServer(SERVER_PORT)
-        self.server.run()
-        sleep(0.1)
 
     def test_FolderSyncEndToEnd_signup_and_get_access_token(self):
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
-        client = TCPClient(params, None)
+        client = TCPClient(params, FolderMonitor)
         client.signup()
-        sleep(0.1)
         client.shutdown()
         assert_that(client.accessToken, equal_to("123"))
+        print("\n")
 
-    def test_uploadingEmptyFolderToServer(self):
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
-        client = TCPClient(params, None)
-        client.signup()
-        client.uploadFolder()
-        sleep(0.1)
-        client.shutdown()
-        assert_that(self.server.response, is_("sent folder"))
+    # def test_signup_and_upload_folder(self):
+    #     params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
+    #     client = TCPClient(params, FolderMonitor)
+    #     client.signup()
+    #     client.uploadFolder()
+    #     client.shutdown()
+    #     assert_that(self.server.request, equal_to(UPLOAD_FOLDER))
 
-    @classmethod
-    def tearDownClass(self):
-        self.server.stopServer()
-        sleep(1)
+    # def test_uploadingEmptyFolderToServer(self):
+    #     params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
+    #     client = TCPClient(params, None)
+    #     client.signup()
+    #     client.uploadFolder()
+    #     sleep(0.1)
+    #     client.shutdown()
+    #     assert_that(self.server.response, is_("sent folder"))
 
 
 if __name__ == '__main__':

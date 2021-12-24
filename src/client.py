@@ -2,11 +2,12 @@ import socket
 from datetime import time
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-from src.utils import *
+from src.requestsUtil import *
 
 ARG_IP = 0
 ARG_PORT = 1
 ARG_DIR = 2
+
 
 
 class EventHandler(FileSystemEventHandler):
@@ -33,32 +34,40 @@ class FolderMonitor(FileSystemEventHandler):
             observer.join()
 
 
-class TCPClient(ConnectionSystem):
+class TCPClient:
 
     def __init__(self, params, monitor):
-        super().__init__()
         self.accessToken = None
         self.params = params
         self.monitor = monitor
         self.dirPath = params[ARG_DIR]
+        self.server = None
 
     def signup(self):
         serverIp, serverPort = self.params[ARG_IP], int(self.params[ARG_PORT])
-        self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connection.connect((serverIp, serverPort))
-        self.send(REGISTER)
-        self.accessToken = self.read()
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.connect((serverIp, serverPort))
+        self.sendToServer(REGISTER)
+        self.accessToken = self.readFromServer()
+        self.sendToServer(DONE)
+
+
 
     def startMonitoring(self):
         self.monitor.start()
 
     def shutdown(self):
         try:
-            self.connection.close()
+            self.server.close()
         except Exception:
             print("oops")
 
     def uploadFolder(self):
-        self.send("sent folder")
+        self.sendToServer("UPLOAD_FOLDER")
 
+    def sendToServer(self, data):
+        self.server.send(bytes(data, 'utf-8'))
 
+    def readFromServer(self):
+        response = self.server.recv(1024).decode('utf-8')
+        return response
