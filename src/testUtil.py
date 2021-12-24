@@ -5,7 +5,7 @@ from watchdog.observers import Observer
 from server import *
 from requestsUtil import *
 
-SERVER_PORT = 8088
+SERVER_PORT = 8090
 
 
 class FakeRequestHandler(RequestHandler):
@@ -13,6 +13,12 @@ class FakeRequestHandler(RequestHandler):
         if request == REGISTER:
             client_socket.send(b"123")
             print("[REQUEST HANDLER]: %s request handled" % request)
+        if request == UPLOAD_FOLDER:
+            if client_socket.recv(1024).decode('utf-8') == '123':
+                print("[SERVER]: access confirmed")
+                print("uploading folder...")
+
+
 
 
 class FakeTCPServer(TCPServer):

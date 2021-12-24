@@ -9,6 +9,21 @@ ARG_PORT = 1
 ARG_DIR = 2
 
 
+class MsgBuilder():
+
+    @staticmethod
+    def addHeader(msg):
+        prefix = MsgBuilder.__calcZerosPrefix(msg)
+        return prefix + bytes(msg, 'utf-8')
+
+    @staticmethod
+    def __calcZerosPrefix(msg):
+        maxSizeNumberOfDigits = len(str(MAX_MSG_SIZE))
+        msgLenNumOfDigits = len(str(len(msg)))
+        zeros = maxSizeNumberOfDigits - msgLenNumOfDigits
+        prefix = b'0' * zeros + bytes(str(len(msg)), 'utf-8')
+        return prefix
+
 
 class EventHandler(FileSystemEventHandler):
     def on_any_event(self, event):
@@ -40,18 +55,13 @@ class TCPClient:
         self.accessToken = None
         self.params = params
         self.monitor = monitor
-        self.dirPath = params[ARG_DIR]
         self.server = None
 
     def signup(self):
-        serverIp, serverPort = self.params[ARG_IP], int(self.params[ARG_PORT])
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.connect((serverIp, serverPort))
+        self.connect()
         self.sendToServer(REGISTER)
         self.accessToken = self.readFromServer()
         self.sendToServer(DONE)
-
-
 
     def startMonitoring(self):
         self.monitor.start()
@@ -63,7 +73,10 @@ class TCPClient:
             print("oops")
 
     def uploadFolder(self):
+        self.connect()
         self.sendToServer("UPLOAD_FOLDER")
+        self.sendToServer(self.accessToken)
+        self.sendToServer(DONE)
 
     def sendToServer(self, data):
         self.server.send(bytes(data, 'utf-8'))
@@ -71,3 +84,8 @@ class TCPClient:
     def readFromServer(self):
         response = self.server.recv(1024).decode('utf-8')
         return response
+
+    def connect(self):
+        serverIp, serverPort = self.params[ARG_IP], int(self.params[ARG_PORT])
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.connect((serverIp, serverPort))
