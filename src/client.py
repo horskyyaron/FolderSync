@@ -9,11 +9,11 @@ ARG_PORT = 1
 ARG_DIR = 2
 
 
-class MsgBuilder():
+class MsgHandler():
 
     @staticmethod
     def addHeader(msg):
-        prefix = MsgBuilder.__calcZerosPrefix(msg)
+        prefix = MsgHandler.__calcZerosPrefix(msg)
         return prefix + bytes(msg, 'utf-8')
 
     @staticmethod
@@ -23,6 +23,14 @@ class MsgBuilder():
         zeros = maxSizeNumberOfDigits - msgLenNumOfDigits
         prefix = b'0' * zeros + bytes(str(len(msg)), 'utf-8')
         return prefix
+
+    @staticmethod
+    def msgLen(msg):
+        return int(msg[:len(str(MAX_MSG_SIZE))])
+
+    @staticmethod
+    def msgData(msg):
+        return msg[len(str(MAX_MSG_SIZE)):].decode('utf-8')
 
 
 class EventHandler(FileSystemEventHandler):
@@ -79,7 +87,7 @@ class TCPClient:
         self.sendToServer(DONE)
 
     def sendToServer(self, data):
-        self.server.send(bytes(data, 'utf-8'))
+        self.server.send(MsgHandler.addHeader(data))
 
     def readFromServer(self):
         response = self.server.recv(1024).decode('utf-8')
