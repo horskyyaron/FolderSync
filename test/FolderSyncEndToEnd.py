@@ -2,9 +2,10 @@ from time import sleep
 import unittest
 from hamcrest import *
 from src.client import *
+from src.FakeUtils import *
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8090
+SERVER_PORT = 8091
 
 
 class MyTestCase(unittest.TestCase):
@@ -24,6 +25,26 @@ class MyTestCase(unittest.TestCase):
         client.signup()
         client.uploadFolder()
         client.shutdown()
+        print("\n")
+
+    def test_signup_and_upload_folder_and_monitor(self):
+        monitor = FakeFolderMonitor(None, FakeEventHandler)
+        fakeFolder = FakeFolder()
+        fakeFolder.addMonitor(monitor)
+        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
+        client = TCPClient(params, monitor)
+        client.startMonitoring()
+        fakeFolder.notifyEvent("folder created")
+        fakeFolder.notifyEvent("file created")
+        fakeFolder.notifyEvent("folder deleted")
+        fakeFolder.notifyEvent("folder moved")
+        sleep(0.1)
+        monitor.stopMonitoring()
+
+        print("\n")
+
+
+
 
 
     # def test_uploadingEmptyFolderToServer(self):

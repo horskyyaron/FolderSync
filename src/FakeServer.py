@@ -1,23 +1,22 @@
-import threading
 import socket
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
 from server import *
 from requestsUtil import *
 
-SERVER_PORT = 8090
+SERVER_PORT = 8091
 
 
 class FakeRequestHandler(RequestHandler):
     def handleRequest(self, request, client_socket):
         if request == REGISTER:
-            client_socket.send(b"123")
+            client_socket.send(MsgHandler.addHeader("123"))
             print("[REQUEST HANDLER]: %s request handled" % request)
         if request == UPLOAD_FOLDER:
-            if client_socket.recv(1024).decode('utf-8') == '123':
-                print("[SERVER]: access confirmed")
-                print("uploading folder...")
-
+            print("REQUEST HANDLER]: please enter access token")
+            msgSize = int(client_socket.recv(len(str(MAX_MSG_SIZE))))
+            accessToken = MsgHandler.decode(client_socket.recv(msgSize))
+            if accessToken == "123":
+                print("[REQUEST HANDLER]: access approved!")
+                print("[REQUEST HANDLER]: %s request handled" % request)
 
 
 
@@ -60,39 +59,6 @@ class FakeTCPServer(TCPServer):
 
     def stopServer(self):
         self.stop = True
-
-
-class FakeFolderMonitor:
-    def __init__(self, folder, eventHandler):
-        self.folder = folder
-        self.eventHandler = eventHandler
-
-    def monitorOnDifThread(self):
-        print("thread:", threading.currentThread())
-        print("[CLIENT]: monitoring...")
-        observer = Observer()
-        observer.schedule(self.eventHandler, self.folder, recursive=True)
-        observer.start()
-        try:
-            while observer.is_alive():
-                observer.join(1)
-        except KeyboardInterrupt:
-            observer.stop()
-        finally:
-            observer.stop()
-            observer.join()
-
-    def start(self):
-        # Start the server in a new thread
-        daemon = threading.Thread(name='monitor thread',
-                                  target=self.monitorOnDifThread)
-        daemon.setDaemon(True)  # Set as a daemon so it will be killed once the main thread is dead.
-        daemon.start()
-
-
-class FakeEventHandler(FileSystemEventHandler):
-    def on_any_event(self, event):
-        print("something happened")
 
 
 server = FakeTCPServer(SERVER_PORT)

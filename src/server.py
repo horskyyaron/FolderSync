@@ -1,3 +1,5 @@
+from requestsUtil import *
+
 
 class RequestHandler:
     def handleRequest(self, request, client_socket):
@@ -14,8 +16,9 @@ class TCPServer:
         pass
 
     def sendToClient(self, data):
-        self.curClient.send(bytes(data, 'utf-8)'))
+        self.curClient.send(MsgHandler.addHeader(data))
 
     def readFromClient(self):
-        request = self.curClient.recv(1024).decode('utf-8')
-        return request
+        requestSize = int(self.curClient.recv(len(str(MAX_MSG_SIZE))))
+        request = self.curClient.recv(requestSize)
+        return MsgHandler.decode(request)

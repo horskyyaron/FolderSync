@@ -9,30 +9,6 @@ ARG_PORT = 1
 ARG_DIR = 2
 
 
-class MsgHandler():
-
-    @staticmethod
-    def addHeader(msg):
-        prefix = MsgHandler.__calcZerosPrefix(msg)
-        return prefix + bytes(msg, 'utf-8')
-
-    @staticmethod
-    def __calcZerosPrefix(msg):
-        maxSizeNumberOfDigits = len(str(MAX_MSG_SIZE))
-        msgLenNumOfDigits = len(str(len(msg)))
-        zeros = maxSizeNumberOfDigits - msgLenNumOfDigits
-        prefix = b'0' * zeros + bytes(str(len(msg)), 'utf-8')
-        return prefix
-
-    @staticmethod
-    def msgLen(msg):
-        return int(msg[:len(str(MAX_MSG_SIZE))])
-
-    @staticmethod
-    def msgData(msg):
-        return msg[len(str(MAX_MSG_SIZE)):].decode('utf-8')
-
-
 class EventHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         print("something happened")
@@ -74,15 +50,9 @@ class TCPClient:
     def startMonitoring(self):
         self.monitor.start()
 
-    def shutdown(self):
-        try:
-            self.server.close()
-        except Exception:
-            print("oops")
-
     def uploadFolder(self):
         self.connect()
-        self.sendToServer("UPLOAD_FOLDER")
+        self.sendToServer(UPLOAD_FOLDER)
         self.sendToServer(self.accessToken)
         self.sendToServer(DONE)
 
@@ -90,10 +60,17 @@ class TCPClient:
         self.server.send(MsgHandler.addHeader(data))
 
     def readFromServer(self):
-        response = self.server.recv(1024).decode('utf-8')
-        return response
+        responseSize = int(self.server.recv(len(str(MAX_MSG_SIZE))))
+        response = self.server.recv(responseSize)
+        return MsgHandler.decode(response)
 
     def connect(self):
         serverIp, serverPort = self.params[ARG_IP], int(self.params[ARG_PORT])
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.connect((serverIp, serverPort))
+
+    def shutdown(self):
+        try:
+            self.server.close()
+        except Exception:
+            print("oops")
