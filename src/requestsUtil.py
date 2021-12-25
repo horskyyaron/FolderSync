@@ -43,3 +43,12 @@ class MsgHandler:
 
 def generateToken(size=128, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
     return ''.join(random.choice(chars) for _ in range(size))
+
+
+def sendFolderTo(destSocket, folder):
+    destSocket.send(MsgHandler.addHeader("hello"))
+    destSocket.send(MsgHandler.addHeader("my"))
+    destSocket.send(MsgHandler.addHeader("name"))
+    destSocket.send(MsgHandler.addHeader("is"))
+    destSocket.send(MsgHandler.addHeader("yaron"))
+    destSocket.send(MsgHandler.addHeader(DONE))

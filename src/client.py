@@ -69,6 +69,7 @@ class TCPClient:
         self.connect()
         self.sendToServer(UPLOAD_FOLDER)
         self.sendToServer(self.accessToken)
+        sendFolderTo(self.server, self.params[ARG_DIR])
         self.sendToServer(DONE)
 
     def sendToServer(self, data):

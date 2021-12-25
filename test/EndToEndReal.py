@@ -7,7 +7,7 @@ from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8906
+SERVER_PORT = 8900
 
 
 class MyTestCase(unittest.TestCase):
@@ -26,7 +26,7 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         assert_that(128, is_(len(client.accessToken)))
         client.uploadFolder()
-        sleep(0.1)
+        sleep(100)
         # client.startMonitoring()
         # client.stopMonitoring()
         client.shutdown()

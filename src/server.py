@@ -4,10 +4,12 @@ from src.requestsUtil import *
 
 
 class RequestHandler:
-    def __init__(self):
+    def __init__(self, readFromClientMethod, sendToClientMethod):
         self.server = None
         self.requests = {REGISTER: self.register, UPLOAD_FOLDER: self.uploadFolder}
         self.client_socket = None
+        self.read = readFromClientMethod
+        self.send = sendToClientMethod
 
     def addServer(self, server):
         self.server = server
@@ -20,24 +22,27 @@ class RequestHandler:
         accessToken = generateToken()
         deviceId = generateToken(size=5)
         self.server.addClient(accessToken, deviceId)
-        self.client_socket.send(MsgHandler.addHeader(accessToken))
+        self.send(accessToken)
         print("[REQUEST HANDLER]: %s request handled" % REGISTER)
 
     def uploadFolder(self):
         print("[REQUEST HANDLER]: please enter access token")
-        msgSize = int(self.client_socket.recv(len(str(MAX_MSG_SIZE))))
-        accessToken = MsgHandler.decode(self.client_socket.recv(msgSize))
-        if accessToken == "123":
+        accessToken = self.read()
+        if accessToken in self.server.clients:
             print("[REQUEST HANDLER]: access approved!")
+            data = self.read()
+            while data != DONE:
+                print(data)
+                data = self.read()
             print("[REQUEST HANDLER]: %s request handled" % UPLOAD_FOLDER)
-
-
+        else:
+            print("[REQUEST HANDLER]: access token doesn't exists in the system, access denied.")
 
 
 class TCPServer:
     def __init__(self, port):
         self.port = port
-        self.requestHandler = RequestHandler()
+        self.requestHandler = RequestHandler(self.readFromClient, self.sendToClient)
         self.requestHandler.addServer(self)
         self.curClientSocket = None
         self.stop = False
@@ -78,7 +83,3 @@ class TCPServer:
 
     def addClient(self, accessToken, deviceId):
         self.clients[accessToken] = (accessToken, deviceId)
-
-    @classmethod
-    def generateAccessToken(cls):
-        return "123"
