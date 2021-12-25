@@ -11,7 +11,7 @@ class FakeRequestHandler(RequestHandler):
             client_socket.send(MsgHandler.addHeader("123"))
             print("[REQUEST HANDLER]: %s request handled" % request)
         if request == UPLOAD_FOLDER:
-            print("REQUEST HANDLER]: please enter access token")
+            print("[REQUEST HANDLER]: please enter access token")
             msgSize = int(client_socket.recv(len(str(MAX_MSG_SIZE))))
             accessToken = MsgHandler.decode(client_socket.recv(msgSize))
             if accessToken == "123":

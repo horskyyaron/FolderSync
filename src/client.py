@@ -4,33 +4,46 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 from src.requestsUtil import *
 
+
 ARG_IP = 0
 ARG_PORT = 1
 ARG_DIR = 2
 
 
 class EventHandler(FileSystemEventHandler):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.events = []
+
     def on_any_event(self, event):
-        print("something happened")
+        print("[EVENT HANDLER]: event happened: ", event)
+        self.events.append(event)
+
+
 
 
 class FolderMonitor(FileSystemEventHandler):
-    def __init__(self, folder):
+    def __init__(self, folder, eventHandler):
         self.folder = folder
-        self.eventHandler = EventHandler()
+        self.eventHandler = eventHandler()
+        self.observer = Observer()
 
     def start(self):
-        observer = Observer()
-        observer.schedule(self.eventHandler, self.folder, recursive=True)
-        observer.start()
+        print('[MONITOR]: started monitoring')
+        self.observer.schedule(self.eventHandler, self.folder, recursive=True)
+        self.observer.start()
         try:
-            while observer.is_alive():
-                observer.join(1)
+            while self.observer.is_alive():
+                self.observer.join(1)
         except KeyboardInterrupt:
-            observer.stop()
+            self.observer.stop()
         finally:
-            observer.stop()
-            observer.join()
+            self.observer.stop()
+            self.observer.join()
+
+    def stop(self):
+        self.observer.stop()
 
 
 class TCPClient:
@@ -49,6 +62,9 @@ class TCPClient:
 
     def startMonitoring(self):
         self.monitor.start()
+
+    def stopMonitoring(self):
+        self.monitor.stop()
 
     def uploadFolder(self):
         self.connect()
@@ -74,3 +90,4 @@ class TCPClient:
             self.server.close()
         except Exception:
             print("oops")
+
