@@ -10,7 +10,6 @@ ARG_DIR = 2
 
 
 class EventHandler(FileSystemEventHandler):
-
     def __init__(self) -> None:
         super().__init__()
         self.events = []
@@ -51,39 +50,46 @@ class FolderMonitor(FileSystemEventHandler):
         self.observer.stop()
 
 
+class ClientCommunicator:
+    def __init__(self, serverSocket):
+        self.serverSocket = serverSocket
+
+    def sendToServer(self, data):
+        self.serverSocket.send(MsgHandler.addHeader(data))
+
+    def readFromServer(self):
+        responseSize = int(self.serverSocket.recv(len(str(MAX_MSG_SIZE))))
+        response = self.serverSocket.recv(responseSize)
+        return MsgHandler.decode(response)
+
+
 class TCPClient:
 
     def __init__(self, params, monitor):
         self.accessToken = None
         self.params = params
         self.monitor = monitor
-        self.server = None
+        self.serverSocket = None
+        self.communicator = None
 
     def register(self):
         self.connect()
-        self.sendToServer(REGISTER)
-        self.accessToken = self.readFromServer()
-        self.sendToServer(DONE)
+        self.communicator.sendToServer(REGISTER)
+        self.accessToken = self.communicator.readFromServer()
+        self.communicator.sendToServer(DONE)
 
     def uploadFolder(self):
         self.connect()
-        self.sendToServer(UPLOAD_FOLDER)
-        self.sendToServer(self.accessToken)
-        sendFolderTo(self.server, self.params[ARG_DIR])
-        self.sendToServer(DONE)
-
-    def sendToServer(self, data):
-        self.server.send(MsgHandler.addHeader(data))
-
-    def readFromServer(self):
-        responseSize = int(self.server.recv(len(str(MAX_MSG_SIZE))))
-        response = self.server.recv(responseSize)
-        return MsgHandler.decode(response)
+        self.communicator.sendToServer(UPLOAD_FOLDER)
+        self.communicator.sendToServer(self.accessToken)
+        sendFolderTo(self.serverSocket, self.params[ARG_DIR])
+        self.communicator.sendToServer(DONE)
 
     def connect(self):
         serverIp, serverPort = self.params[ARG_IP], int(self.params[ARG_PORT])
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.connect((serverIp, serverPort))
+        self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.serverSocket.connect((serverIp, serverPort))
+        self.communicator = ClientCommunicator(self.serverSocket)
 
     def startMonitoring(self):
         self.monitor.start()
@@ -93,6 +99,6 @@ class TCPClient:
 
     def shutdown(self):
         try:
-            self.server.close()
+            self.serverSocket.close()
         except Exception:
             print("oops")

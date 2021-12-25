@@ -15,6 +15,8 @@ class ServerCommunicator:
         request = self.clientSocket.recv(self.__readRequestSize())
         return MsgHandler.decode(request)
 
+
+
     def __readRequestSize(self):
         return int(self.clientSocket.recv(len(str(MAX_MSG_SIZE))))
 
