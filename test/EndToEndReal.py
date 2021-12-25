@@ -1,3 +1,4 @@
+import os
 import threading
 import unittest
 from time import sleep
@@ -7,7 +8,7 @@ from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8900
+SERVER_PORT = 8084
 
 
 class MyTestCase(unittest.TestCase):
@@ -26,10 +27,15 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         assert_that(128, is_(len(client.accessToken)))
         client.uploadFolder()
-        sleep(100)
+        sleep(0.5)
+        assert_that(DIR_PATH, is_(self.server.clients[client.accessToken].folderRoot))
         # client.startMonitoring()
         # client.stopMonitoring()
+
         client.shutdown()
+        # os.rmdir(self.server.clients[client.accessToken].folderLocalCopyRoot)
+
+
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+import os
 import random
 import string
 
@@ -7,6 +8,8 @@ UPLOAD_FOLDER = 'UPLOAD_FOLDER'
 REQUEST_HANDLED = 'REQUEST_HANDLED'
 
 SEPERATOR = '#######'
+FOLDER_TYPE = 'folder'
+FILE_TYPE = 'file'
 
 # MAX SIZE 10GB
 MAX_MSG_SIZE = 10737418240
@@ -45,10 +48,30 @@ def generateToken(size=128, chars=string.ascii_uppercase + string.digits + strin
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def sendFolderTo(destSocket, folder):
-    destSocket.send(MsgHandler.addHeader("hello"))
-    destSocket.send(MsgHandler.addHeader("my"))
-    destSocket.send(MsgHandler.addHeader("name"))
-    destSocket.send(MsgHandler.addHeader("is"))
-    destSocket.send(MsgHandler.addHeader("yaron"))
+def sendFile(destSocket, filePath):
+    destSocket.send(MsgHandler.addHeader("file bytes"))
+
+
+def sendFolderTo(destSocket, folderPath):
+    destSocket.send(MsgHandler.addHeader("root=" + folderPath))
+    for root, dirs, files in os.walk(folderPath, topdown=True):
+        for dir in dirs:
+            destSocket.send(MsgHandler.addHeader(FOLDER_TYPE + SEPERATOR + root + "/" + dir))
+        for file in files:
+            destSocket.send(MsgHandler.addHeader(FILE_TYPE + SEPERATOR + root + "/" + file))
+            sendFile(destSocket, root + "/" + file)
     destSocket.send(MsgHandler.addHeader(DONE))
+
+
+class Parser:
+    @staticmethod
+    def convertClientPathToLocal(client, remotePath):
+        noRootPrefixRemotePath = Parser.__removePrefix(remotePath, client.folderRoot)
+        if noRootPrefixRemotePath[0] == "/":
+            return client.folderLocalCopyRoot + noRootPrefixRemotePath
+        else:
+            return client.folderLocalCopyRoot + "/" + noRootPrefixRemotePath
+
+    @staticmethod
+    def __removePrefix(txt, prefix):
+        return txt[len(prefix):] if txt.startswith(prefix) else txt
