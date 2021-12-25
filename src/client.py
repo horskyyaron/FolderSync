@@ -59,17 +59,11 @@ class TCPClient:
         self.monitor = monitor
         self.server = None
 
-    def signup(self):
+    def register(self):
         self.connect()
         self.sendToServer(REGISTER)
         self.accessToken = self.readFromServer()
         self.sendToServer(DONE)
-
-    def startMonitoring(self):
-        self.monitor.start()
-
-    def stopMonitoring(self):
-        self.monitor.stop()
 
     def uploadFolder(self):
         self.connect()
@@ -89,6 +83,12 @@ class TCPClient:
         serverIp, serverPort = self.params[ARG_IP], int(self.params[ARG_PORT])
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.connect((serverIp, serverPort))
+
+    def startMonitoring(self):
+        self.monitor.start()
+
+    def stopMonitoring(self):
+        self.monitor.stop()
 
     def shutdown(self):
         try:

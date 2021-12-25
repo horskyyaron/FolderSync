@@ -25,7 +25,7 @@ class MyTestCase(unittest.TestCase):
     def test_FolderSyncEndToEnd_signup_and_get_access_token(self):
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
         client = TCPClient(params, FolderMonitor)
-        client.signup()
+        client.register()
         client.shutdown()
         assert_that(client.accessToken, equal_to("123"))
         print("\n")
@@ -33,7 +33,7 @@ class MyTestCase(unittest.TestCase):
     def test_signup_and_upload_folder(self):
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
         client = TCPClient(params, FolderMonitor)
-        client.signup()
+        client.register()
         client.uploadFolder()
         client.shutdown()
         print("\n")

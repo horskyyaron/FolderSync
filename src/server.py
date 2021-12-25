@@ -3,22 +3,45 @@ import socket
 from src.requestsUtil import *
 
 
-
-
 class RequestHandler:
-    def handleRequest(self, request, client_socket):
-        if request == REGISTER:
-            client_socket.send(MsgHandler.addHeader(generateAccessToken()))
-            print("[REQUEST HANDLER]: %s request handled" % request)
+    def __init__(self):
+        self.server = None
+        self.requests = {REGISTER: self.register, UPLOAD_FOLDER: self.uploadFolder}
+        self.client_socket = None
+
+    def addServer(self, server):
+        self.server = server
+
+    def handleRequest(self, request_type, client_socket):
+        self.client_socket = client_socket
+        self.requests[request_type]()
+
+    def register(self):
+        accessToken = generateToken()
+        deviceId = generateToken(size=5)
+        self.server.addClient(accessToken, deviceId)
+        self.client_socket.send(MsgHandler.addHeader(accessToken))
+        print("[REQUEST HANDLER]: %s request handled" % REGISTER)
+
+    def uploadFolder(self):
+        print("[REQUEST HANDLER]: please enter access token")
+        msgSize = int(self.client_socket.recv(len(str(MAX_MSG_SIZE))))
+        accessToken = MsgHandler.decode(self.client_socket.recv(msgSize))
+        if accessToken == "123":
+            print("[REQUEST HANDLER]: access approved!")
+            print("[REQUEST HANDLER]: %s request handled" % UPLOAD_FOLDER)
+
+
 
 
 class TCPServer:
     def __init__(self, port):
         self.port = port
         self.requestHandler = RequestHandler()
-        self.curClient = None
+        self.requestHandler.addServer(self)
+        self.curClientSocket = None
         self.stop = False
-        self.request = None
+        self.clients = {}
 
     def run(self):
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,26 +53,31 @@ class TCPServer:
 
         while not self.stop:
             try:
-                self.curClient, client_address = server.accept()
+                self.curClientSocket, client_address = server.accept()
                 print("[SERVER]: client connected!")
                 print("[SERVER]: waiting for client request")
-                self.request = self.readFromClient()
-                while self.request != DONE:
-                    print("[CLIENT REQUEST]:", self.request)
-                    self.requestHandler.handleRequest(self.request, self.curClient)
-                    self.request = self.readFromClient()
+                request = self.readFromClient()
+                while request != DONE:
+                    print("[CLIENT REQUEST]:", request)
+                    self.requestHandler.handleRequest(request, self.curClientSocket)
+                    request = self.readFromClient()
                 print("[SERVER]: closing client socket\n")
-                self.curClient.close()
+                self.curClientSocket.close()
             except socket.timeout:
                 continue
 
     def sendToClient(self, data):
-        self.curClient.send(MsgHandler.addHeader(data))
+        self.curClientSocket.send(MsgHandler.addHeader(data))
 
     def readFromClient(self):
-        requestSize = int(self.curClient.recv(len(str(MAX_MSG_SIZE))))
-        request = self.curClient.recv(requestSize)
+        request = self.curClientSocket.recv(self.__readRequestSize())
         return MsgHandler.decode(request)
+
+    def __readRequestSize(self):
+        return int(self.curClientSocket.recv(len(str(MAX_MSG_SIZE))))
+
+    def addClient(self, accessToken, deviceId):
+        self.clients[accessToken] = (accessToken, deviceId)
 
     @classmethod
     def generateAccessToken(cls):

@@ -6,17 +6,17 @@ SERVER_PORT = 8091
 
 
 class FakeRequestHandler(RequestHandler):
-    def handleRequest(self, request, client_socket):
-        if request == REGISTER:
+    def handleRequest(self, request_type, client_socket):
+        if request_type == REGISTER:
             client_socket.send(MsgHandler.addHeader("123"))
-            print("[REQUEST HANDLER]: %s request handled" % request)
-        if request == UPLOAD_FOLDER:
+            print("[REQUEST HANDLER]: %s request handled" % request_type)
+        if request_type == UPLOAD_FOLDER:
             print("[REQUEST HANDLER]: please enter access token")
             msgSize = int(client_socket.recv(len(str(MAX_MSG_SIZE))))
             accessToken = MsgHandler.decode(client_socket.recv(msgSize))
             if accessToken == "123":
                 print("[REQUEST HANDLER]: access approved!")
-                print("[REQUEST HANDLER]: %s request handled" % request)
+                print("[REQUEST HANDLER]: %s request handled" % request_type)
 
 
 

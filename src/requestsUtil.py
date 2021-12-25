@@ -41,5 +41,5 @@ class MsgHandler:
         return msg.decode(FORMAT)
 
 
-def generateAccessToken(size=128, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
+def generateToken(size=128, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
     return ''.join(random.choice(chars) for _ in range(size))
