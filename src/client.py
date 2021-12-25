@@ -50,7 +50,7 @@ class FolderMonitor(FileSystemEventHandler):
         self.observer.stop()
 
 
-class ClientCommunicator:
+class ClientCommunicator(BaseCommunicator):
     def __init__(self, serverSocket):
         self.serverSocket = serverSocket
 
@@ -82,7 +82,7 @@ class TCPClient:
         self.connect()
         self.communicator.sendToServer(UPLOAD_FOLDER)
         self.communicator.sendToServer(self.accessToken)
-        sendFolderTo(self.serverSocket, self.params[ARG_DIR])
+        self.communicator.sendFolderTo(self.serverSocket, self.params[ARG_DIR])
         self.communicator.sendToServer(DONE)
 
     def connect(self):

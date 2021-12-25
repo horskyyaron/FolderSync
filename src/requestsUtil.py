@@ -52,15 +52,17 @@ def sendFile(destSocket, filePath):
     destSocket.send(MsgHandler.addHeader("file bytes"))
 
 
-def sendFolderTo(destSocket, folderPath):
-    destSocket.send(MsgHandler.addHeader("root=" + folderPath))
-    for root, dirs, files in os.walk(folderPath, topdown=True):
-        for dir in dirs:
-            destSocket.send(MsgHandler.addHeader(FOLDER_TYPE + SEPERATOR + root + "/" + dir))
-        for file in files:
-            destSocket.send(MsgHandler.addHeader(FILE_TYPE + SEPERATOR + root + "/" + file))
-            sendFile(destSocket, root + "/" + file)
-    destSocket.send(MsgHandler.addHeader(DONE))
+class BaseCommunicator:
+
+    def sendFolderTo(self, destSocket, folderPath):
+        destSocket.send(MsgHandler.addHeader("root=" + folderPath))
+        for root, dirs, files in os.walk(folderPath, topdown=True):
+            for dir in dirs:
+                destSocket.send(MsgHandler.addHeader(FOLDER_TYPE + SEPERATOR + root + "/" + dir))
+            for file in files:
+                destSocket.send(MsgHandler.addHeader(FILE_TYPE + SEPERATOR + root + "/" + file))
+                sendFile(destSocket, root + "/" + file)
+        destSocket.send(MsgHandler.addHeader(DONE))
 
 
 class Parser:
