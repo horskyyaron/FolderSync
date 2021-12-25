@@ -1,9 +1,8 @@
 import socket
 from datetime import time
-from watchdog.events import FileSystemEventHandler
+from watchdog.events import *
 from watchdog.observers import Observer
 from src.requestsUtil import *
-
 
 ARG_IP = 0
 ARG_PORT = 1
@@ -18,9 +17,15 @@ class EventHandler(FileSystemEventHandler):
 
     def on_any_event(self, event):
         print("[EVENT HANDLER]: event happened: ", event)
-        self.events.append(event)
+        if self.__isKeyEvent(event):
+            print("append: ", event)
+            self.events.append(event)
 
-
+    def __isKeyEvent(self, event):
+        if (isinstance(event, DirModifiedEvent) or isinstance(event, FileModifiedEvent) or isinstance(event,
+                                                                                                      FileClosedEvent)):
+            return False
+        return True
 
 
 class FolderMonitor(FileSystemEventHandler):
@@ -90,4 +95,3 @@ class TCPClient:
             self.server.close()
         except Exception:
             print("oops")
-

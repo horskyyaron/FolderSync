@@ -12,7 +12,6 @@ SERVER_PORT = 8091
 
 class MyTestCase(unittest.TestCase):
 
-
     def test_FolderSyncEndToEnd_signup_and_get_access_token(self):
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
         client = TCPClient(params, FolderMonitor)
@@ -43,39 +42,6 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         monitor.stopMonitoring()
         print("\n")
-
-    def test_monitor_created_new_folder(self):
-        monitor = FolderMonitor(DIR_PATH, EventHandler)
-        client = TCPClient(None, monitor)
-        threading.Thread(name="monitor-thread", target=client.startMonitoring).start()
-        sleep(0.1)
-        os.mkdir(DIR_PATH+"/newDir")
-        sleep(0.1)
-        print("\n")
-        client.stopMonitoring()
-        os.rmdir(DIR_PATH+"/"+"newDir")
-        eventsStack = monitor.eventHandler.events
-
-        assert_that(DirModifiedEvent(DIR_PATH), is_(eventsStack.pop()))
-        assert_that(DirCreatedEvent(DIR_PATH+"/"+"newDir"), is_(eventsStack.pop()))
-
-    def test_monitor_delete_folder(self):
-        os.mkdir(DIR_PATH + "/newDir")
-        monitor = FolderMonitor(DIR_PATH, EventHandler)
-        client = TCPClient(None, monitor)
-        threading.Thread(name="monitor-thread", target=client.startMonitoring).start()
-        sleep(0.1)
-        os.rmdir(DIR_PATH+"/newDir")
-        sleep(0.1)
-        print("\n")
-        client.stopMonitoring()
-
-        eventsStack = monitor.eventHandler.events
-        assert_that(DirModifiedEvent(DIR_PATH), is_(eventsStack.pop()))
-        assert_that(DirDeletedEvent(DIR_PATH+"/"+"newDir"), is_(eventsStack.pop()))
-
-
-
 
 
 

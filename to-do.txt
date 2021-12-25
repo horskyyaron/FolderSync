@@ -13,5 +13,19 @@ Scenarios:
 
 * multiple devices.
 
+test monitoring:
+* empty-folder created V
+* empty-folder deleted V
+* empty-folder moved V
+* file created V
+* file deleted
+* file moved
+* non-empty folder deleted
+* non-empty folder moved
+* file modified
+* file rename
+* folder rename
+
+
 Later:
 * raise expection when input arguments aren't valid.
