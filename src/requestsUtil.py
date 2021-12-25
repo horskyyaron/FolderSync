@@ -14,6 +14,7 @@ FILE_TYPE = 'file'
 
 # MAX SIZE 10GB
 MAX_MSG_SIZE = 10737418240
+READING_SPEED_FACTOR = 50
 FORMAT = 'utf-8'
 
 
@@ -86,12 +87,12 @@ class BaseCommunicator:
         self.send(str(length))
 
         with open(path, "rb") as f:
-            data = f.read(1024)
+            data = f.read(1024 * READING_SPEED_FACTOR)
             while data:
                 self.send(data, msg_in_bytes=True)
                 # for testing purposes
-                sleep(0.001)
-                data = f.read(1024)
+                sleep(0.002)
+                data = f.read(1024 * READING_SPEED_FACTOR)
             x = 5
 
     def readFile(self):
