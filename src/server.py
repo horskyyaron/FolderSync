@@ -1,4 +1,4 @@
-from requestsUtil import *
+from src.requestsUtil import *
 
 
 class RequestHandler:

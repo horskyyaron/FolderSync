@@ -1,6 +1,6 @@
 import socket
-from server import *
-from requestsUtil import *
+from src.server import *
+from src.requestsUtil import *
 
 SERVER_PORT = 8091
 
@@ -61,5 +61,5 @@ class FakeTCPServer(TCPServer):
         self.stop = True
 
 
-server = FakeTCPServer(SERVER_PORT)
-server.run()
+# server = FakeTCPServer(SERVER_PORT)
+# server.run()

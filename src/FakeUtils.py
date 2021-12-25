@@ -13,10 +13,10 @@ class FakeFolderMonitor:
     def monitorOnDifThread(self):
         while not self.stop:
             if self.events:
-                self.lock.acquire()
+                # self.lock.acquire()
                 if self.events:
                     self.eventHandler.on_any_event(self.events.pop(0))
-                self.lock.release()
+                # self.lock.release()
 
     def start(self):
         t = threading.Thread(name='Monitor-Thread',

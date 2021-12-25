@@ -2,15 +2,25 @@ import os
 from time import sleep
 import unittest
 from hamcrest import *
+
+from src.FakeServer import FakeTCPServer
 from src.client import *
 from src.FakeUtils import *
 from watchdog.events import *
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8091
+SERVER_PORT = 8900
 
 
 class MyTestCase(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self) -> None:
+        self.server = FakeTCPServer(SERVER_PORT)
+        self.t = threading.Thread(name="server-thread", target=self.server.run)
+        self.t.setDaemon(True)
+        self.t.start()
+        sleep(1)
 
     def test_FolderSyncEndToEnd_signup_and_get_access_token(self):
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
@@ -42,17 +52,6 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         monitor.stopMonitoring()
         print("\n")
-
-
-
-    # def test_uploadingEmptyFolderToServer(self):
-    #     params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, "some interval"]
-    #     client = TCPClient(params, None)
-    #     client.signup()
-    #     client.uploadFolder()
-    #     sleep(0.1)
-    #     client.shutdown()
-    #     assert_that(self.server.response, is_("sent folder"))
 
 
 if __name__ == '__main__':
