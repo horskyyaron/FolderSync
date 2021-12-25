@@ -4,25 +4,15 @@ import socket
 from src.requestsUtil import *
 
 
-class ServerCommunicator:
+class ServerCommunicator(BaseCommunicator):
     def __init__(self, clientSocket):
-        self.clientSocket = clientSocket
+        super().__init__(clientSocket)
 
     def sendToClient(self, data):
-        self.clientSocket.send(MsgHandler.addHeader(data))
+        self.send(data)
 
     def readFromClient(self):
-        request = self.clientSocket.recv(self.__readRequestSize())
-        return MsgHandler.decode(request)
-
-
-
-    def __readRequestSize(self):
-        return int(self.clientSocket.recv(len(str(MAX_MSG_SIZE))))
-
-    def close(self):
-        self.clientSocket.close()
-
+        return self.read()
 
 class RequestHandler:
     def __init__(self, client=None):
@@ -64,8 +54,8 @@ class RequestHandler:
                 if dataType == FOLDER_TYPE:
                     os.mkdir(localPath)
                 else:
-                    file = self.communicator.readFromClient()
-                    print(file)
+                    file = self.communicator.readFile()
+                    self.communicator.saveFile(localPath, file)
                 data = self.communicator.readFromClient()
             print("[REQUEST HANDLER]: %s request handled" % UPLOAD_FOLDER)
         else:

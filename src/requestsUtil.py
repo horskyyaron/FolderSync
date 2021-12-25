@@ -1,6 +1,7 @@
 import os
 import random
 import string
+from time import sleep
 
 REGISTER = 'REGISTER'
 DONE = 'DONE'
@@ -19,9 +20,12 @@ FORMAT = 'utf-8'
 class MsgHandler:
 
     @staticmethod
-    def addHeader(msg):
+    def addHeader(msg, msg_in_bytes=False):
         prefix = MsgHandler.__calcZerosPrefix(msg)
-        return prefix + bytes(msg, FORMAT)
+        if msg_in_bytes:
+            return prefix + msg
+        else:
+            return prefix + bytes(msg, FORMAT)
 
     @staticmethod
     def __calcZerosPrefix(msg):
@@ -48,21 +52,65 @@ def generateToken(size=128, chars=string.ascii_uppercase + string.digits + strin
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def sendFile(destSocket, filePath):
-    destSocket.send(MsgHandler.addHeader("file bytes"))
-
-
 class BaseCommunicator:
+    def __init__(self, destSocket):
+        self.destSocket = destSocket
 
-    def sendFolderTo(self, destSocket, folderPath):
-        destSocket.send(MsgHandler.addHeader("root=" + folderPath))
+    def sendFolder(self, folderPath):
+        self.destSocket.send(MsgHandler.addHeader("root=" + folderPath))
         for root, dirs, files in os.walk(folderPath, topdown=True):
             for dir in dirs:
-                destSocket.send(MsgHandler.addHeader(FOLDER_TYPE + SEPERATOR + root + "/" + dir))
+                self.destSocket.send(MsgHandler.addHeader(FOLDER_TYPE + SEPERATOR + root + "/" + dir))
             for file in files:
-                destSocket.send(MsgHandler.addHeader(FILE_TYPE + SEPERATOR + root + "/" + file))
-                sendFile(destSocket, root + "/" + file)
-        destSocket.send(MsgHandler.addHeader(DONE))
+                self.destSocket.send(MsgHandler.addHeader(FILE_TYPE + SEPERATOR + root + "/" + file))
+                self.sendFile(root + "/" + file)
+        self.destSocket.send(MsgHandler.addHeader(DONE))
+
+    def send(self, data, msg_in_bytes=False):
+        self.destSocket.send(MsgHandler.addHeader(data, msg_in_bytes))
+
+    def read(self, read_in_bytes=False):
+        request = self.destSocket.recv(self.__readRequestSize())
+        if read_in_bytes:
+            return request
+        return MsgHandler.decode(request)
+
+    def __readRequestSize(self):
+        return int(self.destSocket.recv(len(str(MAX_MSG_SIZE))))
+
+    def close(self):
+        self.destSocket.close()
+
+    def sendFile(self, path):
+        length = os.path.getsize(path)
+        self.send(str(length))
+
+        with open(path, "rb") as f:
+            data = f.read(1024)
+            while data:
+                self.send(data, msg_in_bytes=True)
+                # for testing purposes
+                sleep(0.001)
+                data = f.read(1024)
+            x = 5
+
+    def readFile(self):
+        fileSize = int(self.read())
+        current_size = 0
+        buffer = b""
+        while current_size < fileSize:
+            data = self.read(read_in_bytes=True)
+            if not data:
+                break
+            if len(data) + current_size > fileSize:
+                data = data[:fileSize - current_size]
+            buffer += data
+            current_size += len(data)
+        return buffer
+
+    def saveFile(self, path, data):
+        with open(path, "wb") as f:
+            f.write(data)
 
 
 class Parser:
