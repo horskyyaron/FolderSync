@@ -31,7 +31,7 @@ class EventHandler(FileSystemEventHandler):
 class FolderMonitor(FileSystemEventHandler):
     def __init__(self, folder, eventHandler):
         self.folder = folder
-        self.eventHandler = eventHandler()
+        self.eventHandler = eventHandler
         self.observer = Observer()
 
     def start(self):

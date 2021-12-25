@@ -1,5 +1,7 @@
 Scenarios:
 * client signs up to server and uploads empty folder. (WALKING SKELETON) and monitor for changes.
+    server creates a local folder containing the client folder
+
 * client signs up to server and uploads folder with files + empty folders.
 * client signs up to server and uploads folder with files + non-empty folders.
 * client signs up to server and send updates about creation of file
@@ -18,8 +20,8 @@ test monitoring:
 * empty-folder deleted V
 * empty-folder moved V
 * file created V
-* file deleted
-* file moved
+* file deleted V
+* file moved V
 * non-empty folder deleted
 * non-empty folder moved
 * file modified

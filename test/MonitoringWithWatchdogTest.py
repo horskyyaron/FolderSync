@@ -69,6 +69,36 @@ class MyTestCase(unittest.TestCase):
         eventsStack = self.monitor.eventHandler.events
         assert_that(FileCreatedEvent(DIR_PATH + "/file.txt"), is_(eventsStack.pop()))
 
+    def test_monitor_delete_file(self):
+        with open(DIR_PATH + "/file.txt", "w") as f:
+            f.write("hello")
+        threading.Thread(name="monitor-thread", target=self.client.startMonitoring).start()
+        sleep(0.1)
+        os.remove(DIR_PATH + "/file.txt")
+        sleep(0.1)
+        print("\n")
+        self.client.stopMonitoring()
+
+        eventsStack = self.monitor.eventHandler.events
+        assert_that(FileDeletedEvent(DIR_PATH + "/file.txt"), is_(eventsStack.pop()))
+
+    def test_monitor_move_file(self):
+        with open(DIR_PATH + "/file.txt", "w") as f:
+            f.write("hello")
+        os.mkdir(DIR_PATH + "/sub")
+        threading.Thread(name="monitor-thread", target=self.client.startMonitoring).start()
+        sleep(0.1)
+        os.replace(DIR_PATH + "/file.txt", DIR_PATH + "/sub/file.txt")
+        sleep(0.1)
+        print("\n")
+        self.client.stopMonitoring()
+
+        os.remove(DIR_PATH + "/sub/file.txt")
+        os.rmdir(DIR_PATH + "/sub")
+
+        eventsStack = self.monitor.eventHandler.events
+        assert_that(FileMovedEvent(DIR_PATH+"/file.txt", DIR_PATH + "/sub/file.txt"), is_(eventsStack.pop()))
+
 
 if __name__ == '__main__':
     unittest.main()

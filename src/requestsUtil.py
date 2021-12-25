@@ -1,3 +1,6 @@
+import random
+import string
+
 REGISTER = 'REGISTER'
 DONE = 'DONE'
 UPLOAD_FOLDER = 'UPLOAD_FOLDER'
@@ -37,3 +40,6 @@ class MsgHandler:
     def decode(msg):
         return msg.decode(FORMAT)
 
+
+def generateAccessToken(size=128, chars=string.ascii_uppercase + string.digits + string.ascii_lowercase):
+    return ''.join(random.choice(chars) for _ in range(size))
