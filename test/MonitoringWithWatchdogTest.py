@@ -12,7 +12,7 @@ DIR_PATH = "/home/yaron/Desktop/watched"
 class MyTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.monitor = FolderMonitor(DIR_PATH, EventHandler)
+        self.monitor = FolderMonitor(DIR_PATH, EventHandler())
         self.client = TCPClient(None, self.monitor)
 
     def test_monitor_created_new_folder(self):

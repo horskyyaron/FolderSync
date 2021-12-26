@@ -95,6 +95,9 @@ class TCPServer:
             except socket.timeout:
                 continue
 
+    def getClient(self, accessToken):
+        return self.clients[accessToken]
+
     def addClient(self, accessToken, deviceId):
         clientFolderLocalCopy = "client_" + generateToken(size=5)
         os.mkdir(clientFolderLocalCopy)
