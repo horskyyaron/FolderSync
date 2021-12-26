@@ -22,13 +22,25 @@ def isSame(dir1, dir2):
             return False
         if res.common_dirs:
             for com_dir in res.common_dirs:
-                if not isSame(dir1+"/"+com_dir, dir2+"/"+com_dir):
+                if not isSame(dir1 + "/" + com_dir, dir2 + "/" + com_dir):
                     return False
         return True
 
 
+def deleteDir(path):
+    for root, dirs, files in os.walk(path, topdown=True):
+        for dir in dirs:
+            if isEmpty(root + "/" + dir):
+                os.rmdir(root + "/" + dir)
+            else:
+                deleteDir(root + "/" + dir)
+        for file in files:
+            os.remove(root + "/" + file)
+        os.rmdir(root)
 
 
+def isEmpty(dirPath):
+    return len(os.listdir(dirPath)) == 0
 
 
 class MyTestCase(unittest.TestCase):
@@ -49,12 +61,11 @@ class MyTestCase(unittest.TestCase):
         client.uploadFolder()
         sleep(5)
         assert_that(DIR_PATH, is_(self.server.clients[client.accessToken].folderRoot))
-        assert_that(isSame(DIR_PATH, self.server.getClient(client.accessToken).folderLocalCopyRoot), is_(True))
+        serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        assert_that(isSame(DIR_PATH, serverFolderCopy), is_(True))
 
         client.shutdown()
-        # os.rmdir(self.server.clients[client.accessToken].folderLocalCopyRoot)
-
-
+        deleteDir(serverFolderCopy)
 
 
 if __name__ == '__main__':
