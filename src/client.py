@@ -1,4 +1,5 @@
 import socket
+import threading
 from datetime import time
 from watchdog.events import *
 from watchdog.observers import Observer
@@ -8,17 +9,23 @@ ARG_IP = 0
 ARG_PORT = 1
 ARG_DIR = 2
 
+CREATED = "created"
+
 
 class EventHandler(FileSystemEventHandler):
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
         self.events = []
+        self.tcpClient = None
+
+    def setTCPClient(self, client):
+        self.tcpClient = client
 
     def on_any_event(self, event):
         print("[EVENT HANDLER]: event happened: ", event)
         if self.__isKeyEvent(event):
-            print("append: ", event)
             self.events.append(event)
+            self.notify(event)
 
     def __isKeyEvent(self, event):
         if (isinstance(event, DirModifiedEvent) or isinstance(event, FileModifiedEvent) or isinstance(event,
@@ -26,28 +33,32 @@ class EventHandler(FileSystemEventHandler):
             return False
         return True
 
+    def notify(self, event):
+        self.tcpClient.updateServer(event)
 
-class FolderMonitor(FileSystemEventHandler):
+
+class FolderMonitor:
     def __init__(self, folder, eventHandler):
-        self.folder = folder
-        self.eventHandler = eventHandler
         self.observer = Observer()
+        self.observer.schedule(eventHandler, folder, recursive=True)
+        self.stop = False
 
     def start(self):
         print('[MONITOR]: started monitoring')
-        self.observer.schedule(self.eventHandler, self.folder, recursive=True)
         self.observer.start()
-        try:
-            while self.observer.is_alive():
-                self.observer.join(1)
-        except KeyboardInterrupt:
-            self.observer.stop()
-        finally:
-            self.observer.stop()
-            self.observer.join()
+        while not self.stop:
+            try:
+                while self.observer.is_alive():
+                    self.observer.join(1)
+            except KeyboardInterrupt:
+                self.observer.stop()
+            finally:
+                self.observer.stop()
+                self.observer.join()
 
-    def stop(self):
+    def stopMonitoring(self):
         self.observer.stop()
+        self.stop = True
 
 
 class ClientCommunicator(BaseCommunicator):
@@ -62,12 +73,13 @@ class ClientCommunicator(BaseCommunicator):
 
 
 class TCPClient:
-    def __init__(self, params, monitor):
+    def __init__(self, params):
         self.accessToken = None
         self.params = params
-        self.monitor = monitor
+        self.monitor = None
         self.serverSocket = None
         self.communicator = None
+        self.eventHandler = None
 
     def register(self):
         self.connect()
@@ -89,10 +101,17 @@ class TCPClient:
         self.communicator = ClientCommunicator(self.serverSocket)
 
     def startMonitoring(self):
+        self.eventHandler = EventHandler()
+        self.eventHandler.setTCPClient(self)
+        self.monitor = FolderMonitor(self.params[ARG_DIR], self.eventHandler)
         self.monitor.start()
 
+
     def stopMonitoring(self):
-        self.monitor.stop()
+        self.monitor.stopMonitoring()
+
+    def updateServer(self, event):
+        pass
 
     def shutdown(self):
         try:

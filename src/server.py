@@ -42,10 +42,10 @@ class RequestHandler:
         if accessToken in self.server.clients:
             self.client = self.server.clients[accessToken]
             print("[REQUEST HANDLER]: access approved!")
-            print("[REQUEST HANDLER]: getting root folder path")
             data = self.communicator.readFromClient()
             clientRoot = data.split("root=")[1]
             print('[REQUEST HANDLER]: client root: ', clientRoot)
+            print('[REQUEST HANDLER]: uploading...')
             self.client.setRoot(clientRoot)
             data = self.communicator.readFromClient()
             while data != DONE:
@@ -57,6 +57,7 @@ class RequestHandler:
                     file = self.communicator.readFile()
                     self.communicator.saveFile(localPath, file)
                 data = self.communicator.readFromClient()
+            print('[REQUEST HANDLER]: uploading complete!')
             print("[REQUEST HANDLER]: %s request handled" % UPLOAD_FOLDER)
         else:
             print("[REQUEST HANDLER]: access token doesn't exists in the system, access denied.")

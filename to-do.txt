@@ -1,9 +1,10 @@
 Scenarios:
 * client signs up to server and uploads empty folder. (WALKING SKELETON) and monitor for changes.
-    server creates a local folder containing the client folder
+    server creates a local folder containing the client folder V
 
-* client signs up to server and uploads folder with files + empty folders.
-* client signs up to server and uploads folder with files + non-empty folders.
+* client signs up to server and uploads folder with files + empty folders. V
+* client signs up to server and uploads folder with files + non-empty folders. V
+
 * client signs up to server and send updates about creation of file
 * client signs up to server and send updates about creation of folder.
 * client signs up to server and send updates about deletion of file

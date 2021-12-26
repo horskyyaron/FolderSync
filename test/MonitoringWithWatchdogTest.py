@@ -12,18 +12,18 @@ DIR_PATH = "/home/yaron/Desktop/watched"
 class MyTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.monitor = FolderMonitor(DIR_PATH, EventHandler())
-        self.client = TCPClient(None, self.monitor)
+        params = ["127.0.0.1", None, DIR_PATH, None]
+        self.client = TCPClient(params)
 
     def test_monitor_created_new_folder(self):
         threading.Thread(name="monitor-thread", target=self.client.startMonitoring).start()
-        sleep(0.1)
+        sleep(0.5)
         os.mkdir(DIR_PATH + "/newDir")
-        sleep(0.1)
+        sleep(0.5)
         print("\n")
         self.client.stopMonitoring()
         os.rmdir(DIR_PATH + "/" + "newDir")
-        eventsStack = self.monitor.eventHandler.events
+        eventsStack = self.client.eventHandler.events
 
         assert_that(DirCreatedEvent(DIR_PATH + "/newDir"), is_(eventsStack.pop()))
 
@@ -36,7 +36,7 @@ class MyTestCase(unittest.TestCase):
         print("\n")
         self.client.stopMonitoring()
 
-        eventsStack = self.monitor.eventHandler.events
+        eventsStack = self.client.eventHandler.events
         assert_that(DirDeletedEvent(DIR_PATH + "/" + "newDir"), is_(eventsStack.pop()))
 
     def test_monitor_move_empty_folder(self):
@@ -52,7 +52,7 @@ class MyTestCase(unittest.TestCase):
         os.rmdir(DIR_PATH + "/b/a")
         os.rmdir(DIR_PATH + "/b")
 
-        eventsStack = self.monitor.eventHandler.events
+        eventsStack = self.client.eventHandler.events
         assert_that(DirMovedEvent(DIR_PATH + "/a", DIR_PATH + "/b/a"), is_(eventsStack.pop()))
 
     def test_monitor_create_file(self):
@@ -66,7 +66,7 @@ class MyTestCase(unittest.TestCase):
 
         os.remove(DIR_PATH + "/file.txt")
 
-        eventsStack = self.monitor.eventHandler.events
+        eventsStack = self.client.eventHandler.events
         assert_that(FileCreatedEvent(DIR_PATH + "/file.txt"), is_(eventsStack.pop()))
 
     def test_monitor_delete_file(self):
@@ -79,7 +79,7 @@ class MyTestCase(unittest.TestCase):
         print("\n")
         self.client.stopMonitoring()
 
-        eventsStack = self.monitor.eventHandler.events
+        eventsStack = self.client.eventHandler.events
         assert_that(FileDeletedEvent(DIR_PATH + "/file.txt"), is_(eventsStack.pop()))
 
     def test_monitor_move_file(self):
@@ -96,7 +96,7 @@ class MyTestCase(unittest.TestCase):
         os.remove(DIR_PATH + "/sub/file.txt")
         os.rmdir(DIR_PATH + "/sub")
 
-        eventsStack = self.monitor.eventHandler.events
+        eventsStack = self.client.eventHandler.events
         assert_that(FileMovedEvent(DIR_PATH+"/file.txt", DIR_PATH + "/sub/file.txt"), is_(eventsStack.pop()))
 
 
