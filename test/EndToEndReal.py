@@ -9,7 +9,7 @@ from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8081
+SERVER_PORT = 8091
 
 
 def areDirsIdentical(dir1, dir2):
@@ -75,7 +75,7 @@ class MyTestCase(unittest.TestCase):
         threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
         sleep(0.1)
         os.mkdir(DIR_PATH+"/"+"newFolder")
-        sleep(0.3)
+        sleep(0.5)
         client.stopMonitoring()
         serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
         assert_that(areDirsIdentical(DIR_PATH, serverFolderCopy), is_(True))

@@ -9,8 +9,6 @@ ARG_IP = 0
 ARG_PORT = 1
 ARG_DIR = 2
 
-CREATED = "created"
-
 
 class EventHandler(FileSystemEventHandler):
     def __init__(self):
@@ -21,11 +19,13 @@ class EventHandler(FileSystemEventHandler):
     def setTCPClient(self, client):
         self.tcpClient = client
 
-    def on_any_event(self, event):
-        print("[EVENT HANDLER]: event happened: ", event)
-        if self.__isKeyEvent(event):
-            self.events.append(event)
-            self.notify(event)
+    # def on_any_event(self, event):
+    #     if self.__isKeyEvent(event):
+    #         self.events.append(event)
+
+    def on_created(self, event):
+        self.events.append(event)
+        self.notify(CREATED, event)
 
     def __isKeyEvent(self, event):
         if (isinstance(event, DirModifiedEvent) or isinstance(event, FileModifiedEvent) or isinstance(event,
@@ -33,8 +33,8 @@ class EventHandler(FileSystemEventHandler):
             return False
         return True
 
-    def notify(self, event):
-        self.tcpClient.updateServer(event)
+    def notify(self, event_type, event):
+        self.tcpClient.updateServer(event_type, event)
 
 
 class FolderMonitor:
@@ -85,14 +85,14 @@ class TCPClient:
         self.connect()
         self.communicator.sendToServer(REGISTER)
         self.accessToken = self.communicator.readFromServer()
-        self.communicator.sendToServer(DONE)
+        self.communicator.sendToServer(REQUEST_DONE)
 
     def uploadFolder(self):
         self.connect()
         self.communicator.sendToServer(UPLOAD_FOLDER)
         self.communicator.sendToServer(self.accessToken)
         self.communicator.sendFolder(self.params[ARG_DIR])
-        self.communicator.sendToServer(DONE)
+        self.communicator.sendToServer(REQUEST_DONE)
 
     def connect(self):
         serverIp, serverPort = self.params[ARG_IP], int(self.params[ARG_PORT])
@@ -110,11 +110,20 @@ class TCPClient:
     def stopMonitoring(self):
         self.monitor.stopMonitoring()
 
-    def updateServer(self, event):
-        pass
+    def updateServer(self, event_type, event):
+        if event_type == CREATED:
+            self.newFolderUpdate(event)
 
     def shutdown(self):
         try:
             self.serverSocket.close()
         except Exception:
             print("oops")
+
+    def newFolderUpdate(self, event):
+        self.connect()
+        self.communicator.sendToServer(CREATED)
+        self.communicator.sendToServer(self.accessToken)
+        self.communicator.sendToServer(str(event))
+        self.communicator.sendToServer(DONE)
+        self.communicator.sendToServer(REQUEST_DONE)

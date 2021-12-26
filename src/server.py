@@ -17,7 +17,7 @@ class ServerCommunicator(BaseCommunicator):
 class RequestHandler:
     def __init__(self, client=None):
         self.server = None
-        self.requests = {REGISTER: self.register, UPLOAD_FOLDER: self.uploadFolder}
+        self.requests = {REGISTER: self.register, UPLOAD_FOLDER: self.uploadFolder, CREATED: self.created}
         self.communicator = None
 
     def setCommunicator(self, communicator):
@@ -62,6 +62,21 @@ class RequestHandler:
         else:
             print("[REQUEST HANDLER]: access token doesn't exists in the system, access denied.")
 
+    def created(self):
+        print("[REQUEST HANDLER]: please enter access token")
+        accessToken = self.communicator.readFromClient()
+        if accessToken in self.server.clients:
+            print("[REQUEST HANDLER]: access approved!")
+            self.client = self.server.clients[accessToken]
+            data = self.communicator.readFromClient()
+            while data != DONE:
+                print(data)
+                data = self.communicator.readFromClient()
+
+            # os.mkdir(self.client.folderLocalCopyRoot + "/" + "newFolder")
+        print("[REQUEST HANDLER]: %s request handled" % CREATED)
+
+
 
 class TCPServer:
     def __init__(self, port):
@@ -87,7 +102,7 @@ class TCPServer:
                 print("[SERVER]: client connected!")
                 print("[SERVER]: waiting for client request")
                 request = communicator.readFromClient()
-                while request != DONE:
+                while request != REQUEST_DONE:
                     print("[CLIENT REQUEST]:", request)
                     self.requestHandler.handleRequest(request)
                     request = communicator.readFromClient()
