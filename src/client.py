@@ -84,6 +84,7 @@ class TCPClient:
     def register(self):
         self.connect()
         self.communicator.sendToServer(REGISTER)
+        self.communicator.sendToServer(self.params[ARG_DIR])
         self.accessToken = self.communicator.readFromServer()
         self.communicator.sendToServer(REQUEST_DONE)
 
@@ -124,6 +125,6 @@ class TCPClient:
         self.connect()
         self.communicator.sendToServer(CREATED)
         self.communicator.sendToServer(self.accessToken)
-        self.communicator.sendToServer(str(event))
+        self.communicator.sendToServer(Parser.convertEventToMsg(event))
         self.communicator.sendToServer(DONE)
         self.communicator.sendToServer(REQUEST_DONE)

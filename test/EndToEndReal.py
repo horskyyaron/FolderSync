@@ -9,7 +9,7 @@ from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8091
+SERVER_PORT = 8085
 
 
 def areDirsIdentical(dir1, dir2):
@@ -51,6 +51,7 @@ class MyTestCase(unittest.TestCase):
         self.t.setDaemon(True)
         self.t.start()
         sleep(1)
+
 
     def test_client_register_to_server_uploads_folder_and_server_saves_folder_locally_folders_should_be_identical(self):
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]

@@ -2,6 +2,7 @@ import os
 import random
 import string
 from time import sleep
+from watchdog.events import *
 
 REGISTER = 'REGISTER'
 DONE = 'DONE'
@@ -60,7 +61,6 @@ class BaseCommunicator:
         self.destSocket = destSocket
 
     def sendFolder(self, folderPath):
-        self.destSocket.send(MsgHandler.addHeader("root=" + folderPath))
         for root, dirs, files in os.walk(folderPath, topdown=True):
             for dir in dirs:
                 self.destSocket.send(MsgHandler.addHeader(FOLDER_TYPE + SEPERATOR + root + "/" + dir))
@@ -125,5 +125,30 @@ class Parser:
             return client.folderLocalCopyRoot + "/" + noRootPrefixRemotePath
 
     @staticmethod
+    def convertEventToMsg(event):
+        dest_path = None
+        try:
+            dest_path = event.dest_path
+        except AttributeError:
+            dest_path = ""
+        return str(event.event_type) + "," + str(event.src_path) + "," + str(event.is_directory) + "," + str(dest_path)
+
+    @staticmethod
+    def convertMsgToEvent(msg):
+        params = msg.split(',')
+        return Event(params[0], params[1], params[2], params[3])
+
+
+
+    @staticmethod
     def __removePrefix(txt, prefix):
         return txt[len(prefix):] if txt.startswith(prefix) else txt
+
+
+class Event:
+    def __init__(self, event_type, src_path, is_directory, dest_path):
+        self.eventType = event_type
+        self.srcPath = src_path
+        self.isDir = is_directory
+        self.destPath = dest_path
+

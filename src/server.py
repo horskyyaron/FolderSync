@@ -19,6 +19,7 @@ class RequestHandler:
         self.server = None
         self.requests = {REGISTER: self.register, UPLOAD_FOLDER: self.uploadFolder, CREATED: self.created}
         self.communicator = None
+        self.client = client
 
     def setCommunicator(self, communicator):
         self.communicator = communicator
@@ -30,9 +31,10 @@ class RequestHandler:
         self.requests[request_type]()
 
     def register(self):
+        clientRoot = self.communicator.readFromClient()
         accessToken = generateToken()
         deviceId = generateToken(size=5)
-        self.server.addClient(accessToken, deviceId)
+        self.server.addClient(accessToken, deviceId, clientRoot)
         self.communicator.sendToClient(accessToken)
         print("[REQUEST HANDLER]: %s request handled" % REGISTER)
 
@@ -42,21 +44,18 @@ class RequestHandler:
         if accessToken in self.server.clients:
             self.client = self.server.clients[accessToken]
             print("[REQUEST HANDLER]: access approved!")
-            data = self.communicator.readFromClient()
-            clientRoot = data.split("root=")[1]
-            print('[REQUEST HANDLER]: client root: ', clientRoot)
+            print('[REQUEST HANDLER]: client root: ', self.client.folderRoot)
             print('[REQUEST HANDLER]: uploading...')
-            self.client.setRoot(clientRoot)
-            data = self.communicator.readFromClient()
-            while data != DONE:
-                dataType, remotePath = data.split(SEPERATOR)[0], data.split(SEPERATOR)[1]
+            msg = self.communicator.readFromClient()
+            while msg != DONE:
+                dataType, remotePath = msg.split(SEPERATOR)[0], msg.split(SEPERATOR)[1]
                 localPath = Parser.convertClientPathToLocal(self.client, remotePath)
                 if dataType == FOLDER_TYPE:
                     os.mkdir(localPath)
                 else:
                     file = self.communicator.readFile()
                     self.communicator.saveFile(localPath, file)
-                data = self.communicator.readFromClient()
+                msg = self.communicator.readFromClient()
             print('[REQUEST HANDLER]: uploading complete!')
             print("[REQUEST HANDLER]: %s request handled" % UPLOAD_FOLDER)
         else:
@@ -68,12 +67,13 @@ class RequestHandler:
         if accessToken in self.server.clients:
             print("[REQUEST HANDLER]: access approved!")
             self.client = self.server.clients[accessToken]
-            data = self.communicator.readFromClient()
-            while data != DONE:
-                print(data)
-                data = self.communicator.readFromClient()
+            msg = self.communicator.readFromClient()
+            while msg != DONE:
+                event = Parser.convertMsgToEvent(msg)
+                os.mkdir(Parser.convertClientPathToLocal(self.client, event.srcPath))
+                msg = self.communicator.readFromClient()
 
-            # os.mkdir(self.client.folderLocalCopyRoot + "/" + "newFolder")
+
         print("[REQUEST HANDLER]: %s request handled" % CREATED)
 
 
@@ -114,11 +114,12 @@ class TCPServer:
     def getClient(self, accessToken):
         return self.clients[accessToken]
 
-    def addClient(self, accessToken, deviceId):
+    def addClient(self, accessToken, deviceId, clientRoot):
         clientFolderLocalCopy = "client_" + generateToken(size=5)
         os.mkdir(clientFolderLocalCopy)
         newClient = Client(accessToken, clientFolderLocalCopy)
         newClient.addDevice(Device(deviceId))
+        newClient.folderRoot = clientRoot
         self.clients[accessToken] = newClient
 
 
@@ -132,8 +133,6 @@ class Client:
     def addDevice(self, device):
         self.devices.append(device)
 
-    def setRoot(self, rootPath):
-        self.folderRoot = rootPath
 
 
 class Device:
