@@ -25,7 +25,7 @@ class EventHandler(FileSystemEventHandler):
 
     def on_created(self, event):
         self.events.append(event)
-        self.notify(CREATED, event)
+        self.notify(event)
 
     def __isKeyEvent(self, event):
         if (isinstance(event, DirModifiedEvent) or isinstance(event, FileModifiedEvent) or isinstance(event,
@@ -33,8 +33,8 @@ class EventHandler(FileSystemEventHandler):
             return False
         return True
 
-    def notify(self, event_type, event):
-        self.tcpClient.updateServer(event_type, event)
+    def notify(self, event):
+        self.tcpClient.updateServer(event)
 
 
 class FolderMonitor:
@@ -77,7 +77,6 @@ class TCPClient:
         self.accessToken = None
         self.params = params
         self.monitor = None
-        self.serverSocket = None
         self.communicator = None
         self.eventHandler = None
 
@@ -87,6 +86,7 @@ class TCPClient:
         self.communicator.sendToServer(self.params[ARG_DIR])
         self.accessToken = self.communicator.readFromServer()
         self.communicator.sendToServer(REQUEST_DONE)
+        self.disconnect()
 
     def uploadFolder(self):
         self.connect()
@@ -94,12 +94,13 @@ class TCPClient:
         self.communicator.sendToServer(self.accessToken)
         self.communicator.sendFolder(self.params[ARG_DIR])
         self.communicator.sendToServer(REQUEST_DONE)
+        self.disconnect()
 
     def connect(self):
         serverIp, serverPort = self.params[ARG_IP], int(self.params[ARG_PORT])
-        self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.serverSocket.connect((serverIp, serverPort))
-        self.communicator = ClientCommunicator(self.serverSocket)
+        serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        serverSocket.connect((serverIp, serverPort))
+        self.communicator = ClientCommunicator(serverSocket)
 
     def startMonitoring(self):
         self.eventHandler = EventHandler()
@@ -107,24 +108,23 @@ class TCPClient:
         self.monitor = FolderMonitor(self.params[ARG_DIR], self.eventHandler)
         self.monitor.start()
 
-
     def stopMonitoring(self):
         self.monitor.stopMonitoring()
 
-    def updateServer(self, event_type, event):
-        if event_type == CREATED:
-            self.newFolderUpdate(event)
+    def updateServer(self, event):
+        if event.event_type == CREATED:
+            self.createdUpdate(event)
 
-    def shutdown(self):
-        try:
-            self.serverSocket.close()
-        except Exception:
-            print("oops")
+    def disconnect(self):
+        self.communicator.disconnect()
 
-    def newFolderUpdate(self, event):
+    def createdUpdate(self, event):
         self.connect()
         self.communicator.sendToServer(CREATED)
         self.communicator.sendToServer(self.accessToken)
         self.communicator.sendToServer(Parser.convertEventToMsg(event))
+        if not event.is_directory:
+            self.communicator.sendFile(event.src_path)
         self.communicator.sendToServer(DONE)
         self.communicator.sendToServer(REQUEST_DONE)
+        self.disconnect()

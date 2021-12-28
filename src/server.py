@@ -70,7 +70,12 @@ class RequestHandler:
             msg = self.communicator.readFromClient()
             while msg != DONE:
                 event = Parser.convertMsgToEvent(msg)
-                os.mkdir(Parser.convertClientPathToLocal(self.client, event.srcPath))
+                if event.is_directory:
+                    os.mkdir(Parser.convertClientPathToLocal(self.client, event.src_path))
+                else:
+                    file = self.communicator.readFile()
+                    localPath = Parser.convertClientPathToLocal(self.client, event.src_path)
+                    self.communicator.saveFile(localPath, file)
                 msg = self.communicator.readFromClient()
 
 

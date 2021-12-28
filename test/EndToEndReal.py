@@ -9,7 +9,74 @@ from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8085
+SERVER_PORT = 8096
+
+
+class MyTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(self) -> None:
+        self.server = TCPServer(SERVER_PORT)
+        self.t = threading.Thread(name="server-thread", target=self.server.run)
+        self.t.setDaemon(True)
+        self.t.start()
+        sleep(1)
+
+    def test_client_register_to_server_uploads_folder_and_server_saves_folder_locally_folders_should_be_identical(self):
+        print("TEST: REGISTER AND UPLOAD TO SERVER\n________________________________________\n")
+        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
+        client = TCPClient(params)
+        client.register()
+        sleep(0.1)
+        assert_that(128, is_(len(client.accessToken)))
+        client.uploadFolder()
+        sleep(3)
+        assert_that(DIR_PATH, is_(self.server.clients[client.accessToken].folderRoot))
+        serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        assert_that(areDirsIdentical(DIR_PATH, serverFolderCopy), is_(True))
+
+        deleteDir(serverFolderCopy)
+
+    def test_client_monitoring_and_detect_new_folder_and_updates_server(self):
+        print("TEST: NEW FOLDER IN MONITORED FOLDER\n________________________________________\n")
+        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
+        client = TCPClient(params)
+        client.register()
+        sleep(0.1)
+        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
+        sleep(0.1)
+        os.mkdir(DIR_PATH + "/" + "newFolder")
+        sleep(0.5)
+        client.stopMonitoring()
+        serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        assert_that(areDirsIdentical(DIR_PATH, serverFolderCopy), is_(True))
+
+        os.rmdir(DIR_PATH + "/" + "newFolder")
+        deleteDir(serverFolderCopy)
+
+    def test_client_monitoring_and_detect_new_file_and_updates_server(self):
+        print("TEST: NEW FILE IN MONITORED FOLDER\n________________________________________\n")
+        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
+        client = TCPClient(params)
+        client.register()
+        sleep(0.1)
+        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
+        sleep(0.1)
+
+        # creates new file in the folder
+        with open(DIR_PATH + "/newFile", "w") as f:
+            f.write("")
+
+        sleep(0.5)
+        client.stopMonitoring()
+        serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        assert_that(areDirsIdentical(DIR_PATH, serverFolderCopy), is_(True))
+
+        os.remove(DIR_PATH + "/" + "newFile")
+        deleteDir(serverFolderCopy)
+
+
+if __name__ == '__main__':
+    unittest.main()
 
 
 def areDirsIdentical(dir1, dir2):
@@ -41,49 +108,3 @@ def deleteDir(path):
 
 def isEmpty(dirPath):
     return len(os.listdir(dirPath)) == 0
-
-
-class MyTestCase(unittest.TestCase):
-    @classmethod
-    def setUpClass(self) -> None:
-        self.server = TCPServer(SERVER_PORT)
-        self.t = threading.Thread(name="server-thread", target=self.server.run)
-        self.t.setDaemon(True)
-        self.t.start()
-        sleep(1)
-
-
-    def test_client_register_to_server_uploads_folder_and_server_saves_folder_locally_folders_should_be_identical(self):
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
-        client = TCPClient(params)
-        client.register()
-        sleep(0.1)
-        assert_that(128, is_(len(client.accessToken)))
-        client.uploadFolder()
-        sleep(3)
-        assert_that(DIR_PATH, is_(self.server.clients[client.accessToken].folderRoot))
-        serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
-        assert_that(areDirsIdentical(DIR_PATH, serverFolderCopy), is_(True))
-
-        client.shutdown()
-        deleteDir(serverFolderCopy)
-
-    def test_client_monitoring_and_detect_new_folder_and_updates_server(self):
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
-        client = TCPClient(params)
-        client.register()
-        sleep(0.1)
-        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
-        sleep(0.1)
-        os.mkdir(DIR_PATH+"/"+"newFolder")
-        sleep(0.5)
-        client.stopMonitoring()
-        serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
-        assert_that(areDirsIdentical(DIR_PATH, serverFolderCopy), is_(True))
-
-        client.shutdown()
-        os.rmdir(DIR_PATH+"/"+"newFolder")
-        deleteDir(serverFolderCopy)
-
-if __name__ == '__main__':
-    unittest.main()

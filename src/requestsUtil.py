@@ -8,7 +8,7 @@ REGISTER = 'REGISTER'
 DONE = 'DONE'
 REQUEST_DONE = 'REQUEST_DONE'
 UPLOAD_FOLDER = 'UPLOAD_FOLDER'
-CREATED = 'CREATED'
+CREATED = 'created'
 REQUEST_HANDLED = 'REQUEST_HANDLED'
 
 SEPERATOR = '#######'
@@ -114,6 +114,9 @@ class BaseCommunicator:
         with open(path, "wb") as f:
             f.write(data)
 
+    def disconnect(self):
+        self.destSocket.close()
+
 
 class Parser:
     @staticmethod
@@ -147,8 +150,8 @@ class Parser:
 
 class Event:
     def __init__(self, event_type, src_path, is_directory, dest_path):
-        self.eventType = event_type
-        self.srcPath = src_path
-        self.isDir = is_directory
-        self.destPath = dest_path
+        self.event_type = event_type
+        self.src_path = src_path
+        self.is_directory = False if is_directory == 'False' else True
+        self.dest_path = dest_path
 

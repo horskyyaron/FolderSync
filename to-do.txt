@@ -6,7 +6,7 @@ Scenarios:
 * client signs up to server and uploads folder with files + non-empty folders. V
 
 * client signs up to server and send updates about creation of file
-* client signs up to server and send updates about creation of folder.
+* client signs up to server and send updates about creation of folder. V
 * client signs up to server and send updates about deletion of file
 * client signs up to server and send updates about deletion of empty-folder.
 * client signs up to server and send updates about deletion of non-empty folder.
@@ -15,19 +15,6 @@ Scenarios:
 * client signs up to server and send updates about moving a non-empty folder.
 
 * multiple devices.
-
-test monitoring:
-* empty-folder created V
-* empty-folder deleted V
-* empty-folder moved V
-* file created V
-* file deleted V
-* file moved V
-* non-empty folder deleted
-* non-empty folder moved
-* file modified
-* file rename
-* folder rename
 
 
 Later:
