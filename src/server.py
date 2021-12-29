@@ -18,7 +18,7 @@ class ServerCommunicator(BaseCommunicator):
 class RequestHandler:
     def __init__(self, client=None):
         self.server = None
-        self.requests = {REGISTER: self.register, UPLOAD_FOLDER: self.uploadFolder, CREATED: self.created}
+        self.requests = {REGISTER: self.register, UPLOAD_FOLDER: self.uploadFolder, CREATED: self.created, DELETED: self.deleted}
         self.communicator = None
         self.client = client
 
@@ -72,14 +72,34 @@ class RequestHandler:
             while msg != DONE:
                 event = Parser.convertMsgToEvent(msg)
                 if event.is_directory:
-                    print("[SERVER]: new FOLDER created on client, updating local copy...",
+                    print("[SERVER]: new FOLDER created on client, updating local copy... creating new file ",
                           Parser.convertClientPathToLocal(self.client, event.src_path))
                     os.mkdir(Parser.convertClientPathToLocal(self.client, event.src_path))
                 else:
                     file = self.communicator.readFile()
                     localPath = Parser.convertClientPathToLocal(self.client, event.src_path)
-                    print("[SERVER]: new FILE on client, updating local copy...", localPath)
+                    print("[SERVER]: new FILE on client, updating local copy... creating new file ", localPath)
                     self.communicator.saveFile(localPath, file)
+                msg = self.communicator.readFromClient()
+
+        print("[REQUEST HANDLER]: %s request handled" % CREATED)
+
+    def deleted(self):
+        print("[REQUEST HANDLER]: please enter access token")
+        accessToken = self.communicator.readFromClient()
+        if accessToken in self.server.clients:
+            print("[REQUEST HANDLER]: access approved!")
+            self.client = self.server.clients[accessToken]
+            msg = self.communicator.readFromClient()
+            while msg != DONE:
+                event = Parser.convertMsgToEvent(msg)
+                localPath = Parser.convertClientPathToLocal(self.client, event.src_path)
+                if event.is_directory:
+                    print("[SERVER]: folder DELETED on client, updating local copy... deleting ", localPath)
+                    os.rmdir(localPath)
+                else:
+                    print("[SERVER]: file DELETED on client, updating local copy... deleting ", localPath)
+                    os.remove(localPath)
                 msg = self.communicator.readFromClient()
 
         print("[REQUEST HANDLER]: %s request handled" % CREATED)

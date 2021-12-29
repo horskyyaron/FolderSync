@@ -9,7 +9,7 @@ from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8081
+SERVER_PORT = 8082
 
 
 class MyTestCase(unittest.TestCase):
@@ -40,7 +40,7 @@ class MyTestCase(unittest.TestCase):
         assert_that(128, is_(len(client.accessToken)))
         client.uploadFolder()
         sleep(3)
-        assert_that(DIR_PATH, is_(self.server.clients[client.accessToken].folderRoot))
+        assert_that(DIR_PATH, is_(self.server.getClient(client.accessToken).folderRoot))
         self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
         assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
@@ -74,11 +74,32 @@ class MyTestCase(unittest.TestCase):
         self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
         assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
+    def test_client_monitoring_and_detect_delete_file_and_updates_server(self):
+        print("TEST: DELETE FILE IN MONITORED FOLDER\n________________________________________\n")
+        # creates new file in the folder
+        with open(DIR_PATH + "/newFile", "w") as f:
+            f.write("")
+
+        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
+        client = TCPClient(params)
+        client.register()
+        sleep(0.1)
+        client.uploadFolder()
+        sleep(0.1)
+        # start monitoring
+        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
+        sleep(0.1)
+        # removing a file
+        os.remove(DIR_PATH + "/newFile")
+        sleep(0.5)
+        client.stopMonitoring()
+        self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+
     def tearDown(self):
         deleteDir(self.serverFolderCopy)
         deleteDir(DIR_PATH)
         os.mkdir(DIR_PATH)
-        print('deleting all of the the folder content, making the folder ready for next test')
 
     @classmethod
     def tearDownClass(cls):

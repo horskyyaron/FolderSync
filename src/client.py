@@ -19,13 +19,10 @@ class EventHandler(FileSystemEventHandler):
     def setTCPClient(self, client):
         self.tcpClient = client
 
-    # def on_any_event(self, event):
-    #     if self.__isKeyEvent(event):
-    #         self.events.append(event)
-
-    def on_created(self, event):
-        self.events.append(event)
-        self.notify(event)
+    def on_any_event(self, event):
+        if self.__isKeyEvent(event):
+            self.events.append(event)
+            self.notify(event)
 
     def __isKeyEvent(self, event):
         if (isinstance(event, DirModifiedEvent) or isinstance(event, FileModifiedEvent) or isinstance(event,
@@ -114,6 +111,8 @@ class TCPClient:
     def updateServer(self, event):
         if event.event_type == CREATED:
             self.createdUpdate(event)
+        if event.event_type == DELETED:
+            self.deletedUpdate(event)
 
     def disconnect(self):
         self.communicator.disconnect()
@@ -125,6 +124,15 @@ class TCPClient:
         self.communicator.sendToServer(Parser.convertEventToMsg(event))
         if not event.is_directory:
             self.communicator.sendFile(event.src_path)
+        self.communicator.sendToServer(DONE)
+        self.communicator.sendToServer(REQUEST_DONE)
+        self.disconnect()
+
+    def deletedUpdate(self, event):
+        self.connect()
+        self.communicator.sendToServer(DELETED)
+        self.communicator.sendToServer(self.accessToken)
+        self.communicator.sendToServer(Parser.convertEventToMsg(event))
         self.communicator.sendToServer(DONE)
         self.communicator.sendToServer(REQUEST_DONE)
         self.disconnect()
