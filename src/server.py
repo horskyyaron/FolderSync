@@ -96,7 +96,12 @@ class RequestHandler:
                 localPath = Parser.convertClientPathToLocal(self.client, event.src_path)
                 if event.is_directory:
                     print("[SERVER]: folder DELETED on client, updating local copy... deleting", localPath)
-                    os.rmdir(localPath)
+                    if FileSystemUtils.isEmpty(localPath):
+                        print("deleted empty folder")
+                    else:
+                        print("deleted non-empty folder")
+                    FileSystemUtils.deleteDir(localPath)
+
                 else:
                     print("[SERVER]: file DELETED on client, updating local copy... deleting", localPath)
                     os.remove(localPath)
