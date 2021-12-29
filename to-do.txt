@@ -5,10 +5,10 @@ Scenarios:
 * client signs up to server and uploads folder with files + empty folders. V
 * client signs up to server and uploads folder with files + non-empty folders. V
 
-* client signs up to server and send updates about creation of file
+* client signs up to server and send updates about creation of file V
 * client signs up to server and send updates about creation of folder. V
-* client signs up to server and send updates about deletion of file
-* client signs up to server and send updates about deletion of empty-folder.
+* client signs up to server and send updates about deletion of file V
+* client signs up to server and send updates about deletion of empty-folder. V
 * client signs up to server and send updates about deletion of non-empty folder.
 * client signs up to server and send updates about moving a file.
 * client signs up to server and send updates about moving an empty folder.

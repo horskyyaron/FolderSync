@@ -1,3 +1,4 @@
+import filecmp
 import os
 import random
 import string
@@ -142,8 +143,6 @@ class Parser:
         params = msg.split(',')
         return Event(params[0], params[1], params[2], params[3])
 
-
-
     @staticmethod
     def __removePrefix(txt, prefix):
         return txt[len(prefix):] if txt.startswith(prefix) else txt
@@ -156,3 +155,45 @@ class Event:
         self.is_directory = False if is_directory == 'False' else True
         self.dest_path = dest_path
 
+
+class FileSystemUtils:
+    @staticmethod
+    def areDirsIdentical(dir1, dir2):
+        res = filecmp.dircmp(dir1, dir2)
+        if len(res.left_only) > 0 or len(res.right_only) > 0:
+            return False
+        else:
+            match, mismatch, errors = filecmp.cmpfiles(dir1, dir2, res.common_files)
+            if len(match) != len(res.common_files):
+                return False
+            if res.common_dirs:
+                for com_dir in res.common_dirs:
+                    if not FileSystemUtils.areDirsIdentical(dir1 + "/" + com_dir, dir2 + "/" + com_dir):
+                        return False
+            return True
+
+    @staticmethod
+    def deleteDir(path):
+        for root, dirs, files in os.walk(path, topdown=True):
+            for dir in dirs:
+                if FileSystemUtils.isEmpty(root + "/" + dir):
+                    os.rmdir(root + "/" + dir)
+                else:
+                    FileSystemUtils.deleteDir(root + "/" + dir)
+            for file in files:
+                os.remove(root + "/" + file)
+            os.rmdir(root)
+
+    @staticmethod
+    def isEmpty(dirPath):
+        return len(os.listdir(dirPath)) == 0
+
+    @staticmethod
+    def exists(path):
+        try:
+            os.listdir(path)
+            return True
+        except NotADirectoryError:
+            return True
+        except FileNotFoundError:
+            return False

@@ -3,7 +3,7 @@ import threading
 from datetime import time
 from watchdog.events import *
 from watchdog.observers import Observer
-from src.requestsUtil import *
+from src.util import *
 
 ARG_IP = 0
 ARG_PORT = 1

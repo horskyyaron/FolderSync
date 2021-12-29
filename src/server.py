@@ -1,7 +1,7 @@
 import os
 import socket
 
-from src.requestsUtil import *
+from src.util import *
 
 
 class ServerCommunicator(BaseCommunicator):

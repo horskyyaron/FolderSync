@@ -5,12 +5,14 @@ from time import sleep
 from hamcrest import *
 import filecmp
 
+from src.util import FileSystemUtils
 from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
 SERVER_PORT = 8082
 
+fsu = FileSystemUtils()
 
 class MyTestCase(unittest.TestCase):
     @classmethod
@@ -21,13 +23,13 @@ class MyTestCase(unittest.TestCase):
         self.t.start()
         sleep(1)
 
-        if not exists(DIR_PATH):
+        if not fsu.exists(DIR_PATH):
             print("created 'watched' folder at {}".format(DIR_PATH))
             os.mkdir(DIR_PATH)
 
     def setUp(self):
-        if not isEmpty(DIR_PATH):
-            deleteDir(DIR_PATH)
+        if not fsu.isEmpty(DIR_PATH):
+            fsu.deleteDir(DIR_PATH)
             os.mkdir(DIR_PATH)
 
     def test_client_register_to_server_uploads_folder_and_server_saves_folder_locally_folders_should_be_identical(self):
@@ -41,7 +43,7 @@ class MyTestCase(unittest.TestCase):
         sleep(3)
         assert_that(DIR_PATH, is_(self.server.getClient(client.accessToken).folderRoot))
         self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
-        assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_new_folder_and_updates_server(self):
         print("TEST: NEW FOLDER IN MONITORED FOLDER\n________________________________________\n")
@@ -55,7 +57,7 @@ class MyTestCase(unittest.TestCase):
         sleep(0.5)
         client.stopMonitoring()
         self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
-        assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_new_file_and_updates_server(self):
         print("TEST: NEW FILE IN MONITORED FOLDER\n________________________________________\n")
@@ -71,7 +73,7 @@ class MyTestCase(unittest.TestCase):
         sleep(0.5)
         client.stopMonitoring()
         self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
-        assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_delete_file_and_updates_server(self):
         print("TEST: DELETE FILE IN MONITORED FOLDER\n________________________________________\n")
@@ -93,7 +95,7 @@ class MyTestCase(unittest.TestCase):
         sleep(0.5)
         client.stopMonitoring()
         self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
-        assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_delete_empty_folder_and_updates_server(self):
         print("TEST: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n")
@@ -114,59 +116,38 @@ class MyTestCase(unittest.TestCase):
         sleep(0.5)
         client.stopMonitoring()
         self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
-        assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+
+    # def test_client_monitoring_and_detect_delete_non_empty_folder_and_updates_server(self):
+    #     print("TEST: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n")
+    #     # creates new folder and a file in it in the monitored folder
+    #     os.mkdir(DIR_PATH + "/newFolder")
+    #     with open(DIR_PATH + "/newFolder/newFile", "w") as f:
+    #         f.write("")
+    #
+    #     params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
+    #     client = TCPClient(params)
+    #     client.register()
+    #     sleep(0.1)
+    #     client.uploadFolder()
+    #     sleep(0.1)
+    #     # start monitoring
+    #     threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
+    #     sleep(0.5)
+    #     client.stopMonitoring()
+    #     self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+    #     assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def tearDown(self):
-        deleteDir(self.serverFolderCopy)
-        deleteDir(DIR_PATH)
+        fsu.deleteDir(self.serverFolderCopy)
+        fsu.deleteDir(DIR_PATH)
         os.mkdir(DIR_PATH)
 
     @classmethod
     def tearDownClass(cls):
-        deleteDir(DIR_PATH)
+        fsu.deleteDir(DIR_PATH)
 
 
 if __name__ == '__main__':
     unittest.main()
-
-
-def areDirsIdentical(dir1, dir2):
-    res = filecmp.dircmp(dir1, dir2)
-    if len(res.left_only) > 0 or len(res.right_only) > 0:
-        return False
-    else:
-        match, mismatch, errors = filecmp.cmpfiles(dir1, dir2, res.common_files)
-        if len(match) != len(res.common_files):
-            return False
-        if res.common_dirs:
-            for com_dir in res.common_dirs:
-                if not areDirsIdentical(dir1 + "/" + com_dir, dir2 + "/" + com_dir):
-                    return False
-        return True
-
-
-def deleteDir(path):
-    for root, dirs, files in os.walk(path, topdown=True):
-        for dir in dirs:
-            if isEmpty(root + "/" + dir):
-                os.rmdir(root + "/" + dir)
-            else:
-                deleteDir(root + "/" + dir)
-        for file in files:
-            os.remove(root + "/" + file)
-        os.rmdir(root)
-
-
-def isEmpty(dirPath):
-    return len(os.listdir(dirPath)) == 0
-
-
-def exists(path):
-    try:
-        os.listdir(path)
-        return True
-    except NotADirectoryError:
-        return True
-    except FileNotFoundError:
-        return False
 

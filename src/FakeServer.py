@@ -1,8 +1,9 @@
 import socket
 from src.server import *
-from src.requestsUtil import *
+from src.util import *
 
 SERVER_PORT = 8091
+
 
 
 class FakeRequestHandler(RequestHandler):
@@ -60,6 +61,3 @@ class FakeTCPServer(TCPServer):
     def stopServer(self):
         self.stop = True
 
-
-# server = FakeTCPServer(SERVER_PORT)
-# server.run()
