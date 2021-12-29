@@ -109,9 +109,9 @@ class TCPClient:
         self.monitor.stopMonitoring()
 
     def updateServer(self, event):
-        if event.event_type == CREATED:
+        if event.event_type.upper() == CREATED.upper():
             self.createdUpdate(event)
-        if event.event_type == DELETED:
+        if event.event_type.upper() == DELETED.upper():
             self.deletedUpdate(event)
 
     def disconnect(self):

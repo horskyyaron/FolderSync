@@ -22,11 +22,10 @@ class MyTestCase(unittest.TestCase):
         sleep(1)
 
         if not exists(DIR_PATH):
-            print("created 'watched' folder")
+            print("created 'watched' folder at {}".format(DIR_PATH))
             os.mkdir(DIR_PATH)
 
     def setUp(self):
-        print('make sure folder is empty and ready for test.')
         if not isEmpty(DIR_PATH):
             deleteDir(DIR_PATH)
             os.mkdir(DIR_PATH)
@@ -91,6 +90,27 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         # removing a file
         os.remove(DIR_PATH + "/newFile")
+        sleep(0.5)
+        client.stopMonitoring()
+        self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        assert_that(areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+
+    def test_client_monitoring_and_detect_delete_empty_folder_and_updates_server(self):
+        print("TEST: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n")
+        # creates new folder in the monitored folder
+        os.mkdir(DIR_PATH + "/newFolder")
+
+        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
+        client = TCPClient(params)
+        client.register()
+        sleep(0.1)
+        client.uploadFolder()
+        sleep(0.1)
+        # start monitoring
+        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
+        sleep(0.1)
+        # removing a file
+        os.rmdir(DIR_PATH + "/newFolder")
         sleep(0.5)
         client.stopMonitoring()
         self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
