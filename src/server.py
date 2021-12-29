@@ -14,6 +14,7 @@ class ServerCommunicator(BaseCommunicator):
     def readFromClient(self):
         return self.read()
 
+
 class RequestHandler:
     def __init__(self, client=None):
         self.server = None
@@ -71,16 +72,17 @@ class RequestHandler:
             while msg != DONE:
                 event = Parser.convertMsgToEvent(msg)
                 if event.is_directory:
+                    print("[SERVER]: new FOLDER created on client, updating local copy...",
+                          Parser.convertClientPathToLocal(self.client, event.src_path))
                     os.mkdir(Parser.convertClientPathToLocal(self.client, event.src_path))
                 else:
                     file = self.communicator.readFile()
                     localPath = Parser.convertClientPathToLocal(self.client, event.src_path)
+                    print("[SERVER]: new FILE on client, updating local copy...", localPath)
                     self.communicator.saveFile(localPath, file)
                 msg = self.communicator.readFromClient()
 
-
         print("[REQUEST HANDLER]: %s request handled" % CREATED)
-
 
 
 class TCPServer:
@@ -95,7 +97,6 @@ class TCPServer:
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind(('', self.port))
         print("[SERVER]: started. listening on port", self.port)
-        print("\n")
         server.listen(5)
         # server.settimeout(10)
 
@@ -137,7 +138,6 @@ class Client:
 
     def addDevice(self, device):
         self.devices.append(device)
-
 
 
 class Device:
