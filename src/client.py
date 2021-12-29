@@ -113,6 +113,8 @@ class TCPClient:
             self.createdUpdate(event)
         if event.event_type.upper() == DELETED.upper():
             self.deletedUpdate(event)
+        if event.event_type.upper() == MOVED.upper():
+            self.movedUpdate(event)
 
     def disconnect(self):
         self.communicator.disconnect()
@@ -131,6 +133,15 @@ class TCPClient:
     def deletedUpdate(self, event):
         self.connect()
         self.communicator.sendToServer(DELETED)
+        self.communicator.sendToServer(self.accessToken)
+        self.communicator.sendToServer(Parser.convertEventToMsg(event))
+        self.communicator.sendToServer(DONE)
+        self.communicator.sendToServer(REQUEST_DONE)
+        self.disconnect()
+
+    def movedUpdate(self, event):
+        self.connect()
+        self.communicator.sendToServer(MOVED)
         self.communicator.sendToServer(self.accessToken)
         self.communicator.sendToServer(Parser.convertEventToMsg(event))
         self.communicator.sendToServer(DONE)

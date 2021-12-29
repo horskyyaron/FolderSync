@@ -9,7 +9,7 @@ Scenarios:
 * client signs up to server and send updates about creation of folder. V
 * client signs up to server and send updates about deletion of file V
 * client signs up to server and send updates about deletion of empty-folder. V
-* client signs up to server and send updates about deletion of non-empty folder.
+* client signs up to server and send updates about deletion of non-empty folder. V
 * client signs up to server and send updates about moving a file.
 * client signs up to server and send updates about moving an empty folder.
 * client signs up to server and send updates about moving a non-empty folder.

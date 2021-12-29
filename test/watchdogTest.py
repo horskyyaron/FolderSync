@@ -10,7 +10,7 @@ DIR_PATH = "/home/yaron/Desktop/watched"
 
 class FakeEventHandler(FileSystemEventHandler):
     def on_any_event(self, event):
-        print(event)
+        print(event.event_type)
 
 
 class FolderMonitor:

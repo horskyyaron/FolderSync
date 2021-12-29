@@ -11,6 +11,7 @@ REQUEST_DONE = 'REQUEST_DONE'
 UPLOAD_FOLDER = 'UPLOAD_FOLDER'
 CREATED = 'CREATED'
 DELETED = 'DELETED'
+MOVED = 'MOVED'
 REQUEST_HANDLED = 'REQUEST_HANDLED'
 
 SEPERATOR = '#######'
@@ -197,3 +198,7 @@ class FileSystemUtils:
             return True
         except FileNotFoundError:
             return False
+
+    @staticmethod
+    def move(src, dst):
+        os.replace(src, dst)

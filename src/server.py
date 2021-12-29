@@ -18,7 +18,8 @@ class ServerCommunicator(BaseCommunicator):
 class RequestHandler:
     def __init__(self, client=None):
         self.server = None
-        self.requests = {REGISTER: self.register, UPLOAD_FOLDER: self.uploadFolder, CREATED: self.created, DELETED: self.deleted}
+        self.requests = {REGISTER: self.register, UPLOAD_FOLDER: self.uploadFolder,
+                         CREATED: self.created, DELETED: self.deleted, MOVED: self.moved}
         self.communicator = None
         self.client = client
 
@@ -108,6 +109,22 @@ class RequestHandler:
                 msg = self.communicator.readFromClient()
 
         print("[REQUEST HANDLER]: %s request handled" % DELETED)
+
+    def moved(self):
+        print("[REQUEST HANDLER]: please enter access token")
+        accessToken = self.communicator.readFromClient()
+        if accessToken in self.server.clients:
+            print("[REQUEST HANDLER]: access approved!")
+            self.client = self.server.clients[accessToken]
+            msg = self.communicator.readFromClient()
+            while msg != DONE:
+                event = Parser.convertMsgToEvent(msg)
+                localPath_src = Parser.convertClientPathToLocal(self.client, event.src_path)
+                localPath_dst = Parser.convertClientPathToLocal(self.client, event.dest_path)
+                os.replace(localPath_src, localPath_dst)
+                print("[SERVER]: moved file from {} to {}".format(localPath_src, localPath_dst))
+                msg = self.communicator.readFromClient()
+        print("[REQUEST HANDLER]: %s request handled" % MOVED)
 
 
 class TCPServer:
