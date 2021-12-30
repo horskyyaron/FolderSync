@@ -10,7 +10,7 @@ from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8093
+SERVER_PORT = 8099
 
 
 class Counter:
@@ -44,50 +44,45 @@ class MyTestCase(unittest.TestCase):
             fsu.deleteDir(DIR_PATH)
             fsu.createFolder(DIR_PATH)
 
+        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
+        self.client = TCPClient(params)
+        self.client.register()
+        sleep(0.1)
+
+
+
     def test_client_register_to_server_uploads_folder_and_server_saves_folder_locally_folders_should_be_identical(self):
         print(
             "TEST {}: REGISTER AND UPLOAD TO SERVER\n________________________________________\n".format(counter.inc()))
 
         fsu.createNonEmptyFolder(DIR_PATH + "/newFolder", 2)
-
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
-        client = TCPClient(params)
-        client.register()
-        sleep(0.1)
-        assert_that(128, is_(len(client.accessToken)))
-        client.uploadFolder()
-        sleep(3)
-        assert_that(DIR_PATH, is_(self.server.getClient(client.accessToken).folderRoot))
-        self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        assert_that(128, is_(len(self.client.accessToken)))
+        self.client.uploadFolder()
+        sleep(0.5)
+        assert_that(DIR_PATH, is_(self.server.getClient(self.client.accessToken).folderRoot))
+        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_new_folder_and_updates_server(self):
         print(
             "TEST {}: NEW FOLDER IN MONITORED FOLDER\n________________________________________\n".format(counter.inc()))
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
-        client = TCPClient(params)
-        client.register()
-        sleep(0.1)
-        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
+
+        self.startMonitoringThread()
         sleep(0.1)
         fsu.createFolder(DIR_PATH + "/newFolder")
-        sleep(0.5)
-        client.stopMonitoring()
-        self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        sleep(0.1)
+        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+
+
 
     def test_client_monitoring_and_detect_new_file_and_updates_server(self):
         print("TEST {}: NEW FILE IN MONITORED FOLDER\n________________________________________\n".format(counter.inc()))
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
-        client = TCPClient(params)
-        client.register()
-        sleep(0.1)
-        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
+        self.startMonitoringThread()
         sleep(0.1)
         fsu.createFile(DIR_PATH + "/newFile")
-        sleep(0.5)
-        client.stopMonitoring()
-        self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        sleep(0.3)
+        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_delete_file_and_updates_server(self):
@@ -95,20 +90,12 @@ class MyTestCase(unittest.TestCase):
             counter.inc()))
         # creates new file in the folder
         fsu.createFile(DIR_PATH + "/newFile")
-
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
-        client = TCPClient(params)
-        client.register()
-        sleep(0.1)
-        client.uploadFolder()
-        sleep(0.1)
         # start monitoring
-        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
-        sleep(0.1)
+        self.startMonitoringThread()
+        self.client.uploadFolder()
         fsu.deleteFile(DIR_PATH + "/newFile")
-        sleep(0.5)
-        client.stopMonitoring()
-        self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        sleep(0.3)
+        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_delete_empty_folder_and_updates_server(self):
@@ -116,20 +103,12 @@ class MyTestCase(unittest.TestCase):
             counter.inc()))
         # creates new folder in the monitored folder
         fsu.createFolder(DIR_PATH + "/newFolder")
-
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
-        client = TCPClient(params)
-        client.register()
-        sleep(0.1)
-        client.uploadFolder()
-        sleep(0.1)
-        # start monitoring
-        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
+        self.client.uploadFolder()
+        self.startMonitoringThread()
         sleep(0.1)
         fsu.deleteDir(DIR_PATH + "/newFolder")
-        sleep(0.5)
-        client.stopMonitoring()
-        self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        sleep(0.3)
+        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     # couldn't model a user deletion of a non-empty folder, but tested for it manually and it works as well.
@@ -137,20 +116,12 @@ class MyTestCase(unittest.TestCase):
         print("TEST {}: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(
             counter.inc()))
         fsu.createNonEmptyFolder(DIR_PATH + "/newFolder", 1)
-
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
-        client = TCPClient(params)
-        client.register()
+        self.client.uploadFolder()
+        self.startMonitoringThread()
         sleep(0.1)
-        client.uploadFolder()
-        sleep(0.1)
-        # start monitoring
-        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
-        sleep(0.5)
         fsu.deleteDir(DIR_PATH + "/newFolder")
         sleep(0.5)
-        client.stopMonitoring()
-        self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_file_moved_and_updates_server(self):
@@ -159,23 +130,16 @@ class MyTestCase(unittest.TestCase):
         # creates new folder and a file in it in the monitored folder
         fsu.createFolder(DIR_PATH + "/newFolder")
         fsu.createFile(DIR_PATH + "/newFile")
-
-        params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
-        client = TCPClient(params)
-        client.register()
+        self.client.uploadFolder()
+        self.startMonitoringThread()
         sleep(0.1)
-        client.uploadFolder()
-        sleep(0.1)
-        # start monitoring
-        threading.Thread(name="monitor-thread", target=client.startMonitoring, daemon=True).start()
-        sleep(0.5)
         fsu.move(DIR_PATH + "/newFile", DIR_PATH + "/newFolder/newFile")
         sleep(0.5)
-        client.stopMonitoring()
-        self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
+        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def tearDown(self):
+        self.client.stopMonitoring()
         fsu.deleteDir(self.serverFolderCopy)
         fsu.deleteDir(DIR_PATH)
         fsu.createFolder(DIR_PATH)
@@ -183,6 +147,9 @@ class MyTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         fsu.deleteDir(DIR_PATH)
+
+    def startMonitoringThread(self):
+        threading.Thread(name="monitor-thread", target=self.client.startMonitoring, daemon=True).start()
 
 
 if __name__ == '__main__':

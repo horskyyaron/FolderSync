@@ -106,7 +106,8 @@ class TCPClient:
         self.monitor.start()
 
     def stopMonitoring(self):
-        self.monitor.stopMonitoring()
+        if self.monitor:
+            self.monitor.stopMonitoring()
 
     def updateServer(self, event):
         if event.event_type.upper() == CREATED.upper():
