@@ -186,6 +186,10 @@ class FileSystemUtils:
             os.rmdir(root)
 
     @staticmethod
+    def deleteFile(path):
+        os.remove(path)
+
+    @staticmethod
     def isEmpty(dirPath):
         return len(os.listdir(dirPath)) == 0
 
@@ -202,3 +206,12 @@ class FileSystemUtils:
     @staticmethod
     def move(src, dst):
         os.replace(src, dst)
+
+    @staticmethod
+    def createFolder(path):
+        os.mkdir(path)
+
+    @staticmethod
+    def createFile(path, data=""):
+        with open(path, "w") as f:
+            f.write(data)
