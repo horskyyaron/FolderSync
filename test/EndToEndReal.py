@@ -10,9 +10,18 @@ from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8086
+SERVER_PORT = 8090
+
+class Counter:
+    def __init__(self):
+        self.num = 0
+
+    def inc(self):
+        self.num += 1
+        return str(self.num)
 
 fsu = FileSystemUtils()
+counter = Counter()
 
 
 class MyTestCase(unittest.TestCase):
@@ -24,6 +33,8 @@ class MyTestCase(unittest.TestCase):
         self.t.start()
         sleep(1)
 
+
+
         if not fsu.exists(DIR_PATH):
             print("created 'watched' folder at {}".format(DIR_PATH))
             os.mkdir(DIR_PATH)
@@ -33,8 +44,9 @@ class MyTestCase(unittest.TestCase):
             fsu.deleteDir(DIR_PATH)
             os.mkdir(DIR_PATH)
 
+
     def test_client_register_to_server_uploads_folder_and_server_saves_folder_locally_folders_should_be_identical(self):
-        print("TEST: REGISTER AND UPLOAD TO SERVER\n________________________________________\n")
+        print("TEST {}: REGISTER AND UPLOAD TO SERVER\n________________________________________\n".format(counter.inc()))
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
         client = TCPClient(params)
         client.register()
@@ -47,7 +59,7 @@ class MyTestCase(unittest.TestCase):
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_new_folder_and_updates_server(self):
-        print("TEST: NEW FOLDER IN MONITORED FOLDER\n________________________________________\n")
+        print("TEST {}: NEW FOLDER IN MONITORED FOLDER\n________________________________________\n".format(counter.inc()))
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
         client = TCPClient(params)
         client.register()
@@ -61,7 +73,7 @@ class MyTestCase(unittest.TestCase):
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_new_file_and_updates_server(self):
-        print("TEST: NEW FILE IN MONITORED FOLDER\n________________________________________\n")
+        print("TEST {}: NEW FILE IN MONITORED FOLDER\n________________________________________\n".format(counter.inc()))
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
         client = TCPClient(params)
         client.register()
@@ -77,7 +89,7 @@ class MyTestCase(unittest.TestCase):
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_delete_file_and_updates_server(self):
-        print("TEST: DELETE FILE IN MONITORED FOLDER\n________________________________________\n")
+        print("TEST {}: DELETE FILE IN MONITORED FOLDER\n________________________________________\n".format(counter.inc()))
         # creates new file in the folder
         with open(DIR_PATH + "/newFile", "w") as f:
             f.write("")
@@ -99,7 +111,7 @@ class MyTestCase(unittest.TestCase):
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
     def test_client_monitoring_and_detect_delete_empty_folder_and_updates_server(self):
-        print("TEST: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n")
+        print("TEST {}: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(counter.inc()))
         # creates new folder in the monitored folder
         os.mkdir(DIR_PATH + "/newFolder")
 
@@ -121,7 +133,7 @@ class MyTestCase(unittest.TestCase):
 
     # couldn't model a user deletion of a non-empty folder, but tested for it manually and it works as well.
     def test_client_monitoring_and_detect_delete_non_empty_folder_and_updates_server(self):
-        print("TEST: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n")
+        print("TEST {}: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(counter.inc()))
         # creates new folder and a file in it in the monitored folder
         os.mkdir(DIR_PATH + "/newFolder")
         with open(DIR_PATH + "/newFolder/newFile", "w") as f:
@@ -142,8 +154,8 @@ class MyTestCase(unittest.TestCase):
         self.serverFolderCopy = self.server.getClient(client.accessToken).folderLocalCopyRoot
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
 
-    def test_client_monitoring_and_detect_delete_non_empty_folder_and_updates_server(self):
-        print("TEST: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n")
+    def test_client_monitoring_and_detect_file_moved_and_updates_server(self):
+        print("TEST {}: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(counter.inc()))
         # creates new folder and a file in it in the monitored folder
         os.mkdir(DIR_PATH + "/newFolder")
         with open(DIR_PATH + "/newFile", "w") as f:

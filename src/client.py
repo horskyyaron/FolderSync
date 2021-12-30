@@ -25,8 +25,8 @@ class EventHandler(FileSystemEventHandler):
             self.notify(event)
 
     def __isKeyEvent(self, event):
-        if (isinstance(event, DirModifiedEvent) or isinstance(event, FileModifiedEvent) or isinstance(event,
-                                                                                                      FileClosedEvent)):
+        if (isinstance(event, DirModifiedEvent) or isinstance(event, FileModifiedEvent) or
+                isinstance(event, FileClosedEvent)):
             return False
         return True
 
