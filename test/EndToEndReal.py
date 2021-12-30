@@ -10,7 +10,7 @@ from src.client import TCPClient, FolderMonitor, EventHandler
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
-SERVER_PORT = 8091
+SERVER_PORT = 8093
 
 
 class Counter:
@@ -48,10 +48,7 @@ class MyTestCase(unittest.TestCase):
         print(
             "TEST {}: REGISTER AND UPLOAD TO SERVER\n________________________________________\n".format(counter.inc()))
 
-        fsu.createFolder(DIR_PATH+"/newFolder")
-        fsu.createFile(DIR_PATH + "/newFolder/newFile")
-        fsu.createFile(DIR_PATH + "/newFolder/newFile2")
-
+        fsu.createNonEmptyFolder(DIR_PATH + "/newFolder", 2)
 
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
         client = TCPClient(params)
@@ -139,9 +136,7 @@ class MyTestCase(unittest.TestCase):
     def test_client_monitoring_and_detect_delete_non_empty_folder_and_updates_server(self):
         print("TEST {}: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(
             counter.inc()))
-        # creates new folder and a file in it in the monitored folder
-        fsu.createFolder(DIR_PATH + "/newFolder")
-        fsu.createFile(DIR_PATH + "/newFolder/newFile")
+        fsu.createNonEmptyFolder(DIR_PATH + "/newFolder", 1)
 
         params = ["127.0.0.1", str(SERVER_PORT), DIR_PATH, None]
         client = TCPClient(params)

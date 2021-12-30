@@ -215,3 +215,9 @@ class FileSystemUtils:
     def createFile(path, data=""):
         with open(path, "w") as f:
             f.write(data)
+
+    @staticmethod
+    def createNonEmptyFolder(path, numOfFiles):
+        FileSystemUtils.createFolder(path)
+        for i in range(numOfFiles):
+            FileSystemUtils.createFile(path+"/newFile{}".format(i+1))
