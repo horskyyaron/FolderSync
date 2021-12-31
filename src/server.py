@@ -88,13 +88,8 @@ class RequestHandler:
                 msg = self.communicator.readFromClient()
             self.__printRequestCompletedMsg(CREATED)
 
-
     def deleted(self):
-        print("[REQUEST HANDLER]: please enter access token")
-        client_accessToken = self.communicator.readFromClient()
-        if self.server.isClientExists(client_accessToken):
-            print("[REQUEST HANDLER]: access approved!")
-            self.client = self.server.getClient(client_accessToken)
+        if self.__isAccessApproved():
             msg = self.communicator.readFromClient()
             while msg != DONE:
                 event = Parser.convertMsgToEvent(msg)
@@ -106,20 +101,14 @@ class RequestHandler:
                     else:
                         print("deleted non-empty folder")
                     FileSystemUtils.deleteDir(localPath)
-
                 else:
                     print("[SERVER]: file DELETED on client, updating local copy... deleting", localPath)
                     os.remove(localPath)
                 msg = self.communicator.readFromClient()
-
-        print("[REQUEST HANDLER]: %s request handled" % DELETED)
+            self.__printRequestCompletedMsg(DELETED)
 
     def moved(self):
-        print("[REQUEST HANDLER]: please enter access token")
-        client_accessToken = self.communicator.readFromClient()
-        if self.server.isClientExists(client_accessToken):
-            print("[REQUEST HANDLER]: access approved!")
-            self.client = self.server.getClient(client_accessToken)
+        if self.__isAccessApproved():
             msg = self.communicator.readFromClient()
             while msg != DONE:
                 event = Parser.convertMsgToEvent(msg)
@@ -128,7 +117,7 @@ class RequestHandler:
                 os.replace(localPath_src, localPath_dst)
                 print("[SERVER]: moved file from {} to {}".format(localPath_src, localPath_dst))
                 msg = self.communicator.readFromClient()
-        print("[REQUEST HANDLER]: %s request handled" % MOVED)
+            self.__printRequestCompletedMsg(MOVED)
 
 
 class TCPServer:
