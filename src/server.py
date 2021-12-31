@@ -40,12 +40,23 @@ class RequestHandler:
         self.communicator.sendToClient(accessToken)
         print("[REQUEST HANDLER]: %s request handled" % REGISTER)
 
-    def uploadFolder(self):
+    def __isAccessApproved(self):
         print("[REQUEST HANDLER]: please enter access token")
         client_accessToken = self.communicator.readFromClient()
         if self.server.isClientExists(client_accessToken):
-            print("[REQUEST HANDLER]: access approved!")
             self.client = self.server.getClient(client_accessToken)
+            print("[REQUEST HANDLER]: access approved!")
+            return True
+        else:
+            print("[REQUEST HANDLER]: client token doesn't exists, access DENIED!")
+            return False
+
+    def __printRequestCompletedMsg(self, request):
+        print('[REQUEST HANDLER]: uploading complete!')
+        print("[REQUEST HANDLER]: %s request handled" % request)
+
+    def uploadFolder(self):
+        if self.__isAccessApproved():
             print('[REQUEST HANDLER]: client root: ', self.client.folderPathOnClientDevice)
             print('[REQUEST HANDLER]: uploading...')
             msg = self.communicator.readFromClient()
@@ -58,17 +69,10 @@ class RequestHandler:
                     file = self.communicator.readFile()
                     self.communicator.saveFile(localPath, file)
                 msg = self.communicator.readFromClient()
-            print('[REQUEST HANDLER]: uploading complete!')
-            print("[REQUEST HANDLER]: %s request handled" % UPLOAD_FOLDER)
-        else:
-            print("[REQUEST HANDLER]: access token doesn't exists in the system, access denied.")
+            self.__printRequestCompletedMsg(UPLOAD_FOLDER)
 
     def created(self):
-        print("[REQUEST HANDLER]: please enter access token")
-        client_accessToken = self.communicator.readFromClient()
-        if self.server.isClientExists(client_accessToken):
-            print("[REQUEST HANDLER]: access approved!")
-            self.client = self.server.getClient(client_accessToken)
+        if self.__isAccessApproved():
             msg = self.communicator.readFromClient()
             while msg != DONE:
                 event = Parser.convertMsgToEvent(msg)
@@ -82,8 +86,8 @@ class RequestHandler:
                     print("[SERVER]: new FILE on client, updating local copy... creating new file", localPath)
                     self.communicator.saveFile(localPath, file)
                 msg = self.communicator.readFromClient()
+            self.__printRequestCompletedMsg(CREATED)
 
-        print("[REQUEST HANDLER]: %s request handled" % CREATED)
 
     def deleted(self):
         print("[REQUEST HANDLER]: please enter access token")
@@ -167,7 +171,6 @@ class TCPServer:
 
     def isClientExists(self, client_accessToken):
         return client_accessToken in self.clients.keys()
-
 
     def addClient(self, accessToken, deviceId, folderPathOnClientDevice):
         clientFolder = "client_" + generateToken(size=5)
