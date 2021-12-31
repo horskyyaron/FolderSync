@@ -124,11 +124,11 @@ class BaseCommunicator:
 class Parser:
     @staticmethod
     def convertClientPathToLocal(client, remotePath):
-        noRootPrefixRemotePath = Parser.__removePrefix(remotePath, client.folderRoot)
+        noRootPrefixRemotePath = Parser.__removePrefix(remotePath, client.folderPathOnClientDevice)
         if noRootPrefixRemotePath[0] == "/":
-            return client.folderLocalCopyRoot + noRootPrefixRemotePath
+            return client.folder + noRootPrefixRemotePath
         else:
-            return client.folderLocalCopyRoot + "/" + noRootPrefixRemotePath
+            return client.folder + "/" + noRootPrefixRemotePath
 
     @staticmethod
     def convertEventToMsg(event):

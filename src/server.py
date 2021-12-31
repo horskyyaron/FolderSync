@@ -46,7 +46,7 @@ class RequestHandler:
         if accessToken in self.server.clients:
             self.client = self.server.clients[accessToken]
             print("[REQUEST HANDLER]: access approved!")
-            print('[REQUEST HANDLER]: client root: ', self.client.folderRoot)
+            print('[REQUEST HANDLER]: client root: ', self.client.folderPathOnClientDevice)
             print('[REQUEST HANDLER]: uploading...')
             msg = self.communicator.readFromClient()
             while msg != DONE:
@@ -162,21 +162,24 @@ class TCPServer:
     def getClient(self, accessToken):
         return self.clients[accessToken]
 
-    def addClient(self, accessToken, deviceId, clientRoot):
-        clientFolderLocalCopy = "client_" + generateToken(size=5)
-        os.mkdir(clientFolderLocalCopy)
-        newClient = Client(accessToken, clientFolderLocalCopy)
+    def getClientFolder(self, accessToken):
+        return self.clients[accessToken].folder
+
+    def addClient(self, accessToken, deviceId, folderPathOnClientDevice):
+        clientFolder = "client_" + generateToken(size=5)
+        os.mkdir(clientFolder)
+        newClient = Client(accessToken, clientFolder)
         newClient.addDevice(Device(deviceId))
-        newClient.folderRoot = clientRoot
+        newClient.folderPathOnClientDevice = folderPathOnClientDevice
         self.clients[accessToken] = newClient
 
 
 class Client:
-    def __init__(self, accessToken, localCopyPath):
+    def __init__(self, accessToken, path):
         self.accessToken = accessToken
         self.devices = []
-        self.folderLocalCopyRoot = localCopyPath
-        self.folderRoot = None
+        self.folder = path
+        self.folderPathOnClientDevice = None
 
     def addDevice(self, device):
         self.devices.append(device)

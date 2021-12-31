@@ -49,8 +49,6 @@ class MyTestCase(unittest.TestCase):
         self.client.register()
         sleep(0.1)
 
-
-
     def test_client_register_to_server_uploads_folder_and_server_saves_folder_locally_folders_should_be_identical(self):
         print(
             "TEST {}: REGISTER AND UPLOAD TO SERVER\n________________________________________\n".format(counter.inc()))
@@ -59,9 +57,7 @@ class MyTestCase(unittest.TestCase):
         assert_that(128, is_(len(self.client.accessToken)))
         self.client.uploadFolder()
         sleep(0.5)
-        assert_that(DIR_PATH, is_(self.server.getClient(self.client.accessToken).folderRoot))
-        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
-        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 
     def test_client_monitoring_and_detect_new_folder_and_updates_server(self):
         print(
@@ -71,10 +67,7 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         fsu.createFolder(DIR_PATH + "/newFolder")
         sleep(0.1)
-        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
-        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
-
-
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 
     def test_client_monitoring_and_detect_new_file_and_updates_server(self):
         print("TEST {}: NEW FILE IN MONITORED FOLDER\n________________________________________\n".format(counter.inc()))
@@ -82,8 +75,7 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         fsu.createFile(DIR_PATH + "/newFile")
         sleep(0.3)
-        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
-        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 
     def test_client_monitoring_and_detect_delete_file_and_updates_server(self):
         print("TEST {}: DELETE FILE IN MONITORED FOLDER\n________________________________________\n".format(
@@ -95,8 +87,7 @@ class MyTestCase(unittest.TestCase):
         self.client.uploadFolder()
         fsu.deleteFile(DIR_PATH + "/newFile")
         sleep(0.3)
-        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
-        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 
     def test_client_monitoring_and_detect_delete_empty_folder_and_updates_server(self):
         print("TEST {}: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(
@@ -108,8 +99,7 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         fsu.deleteDir(DIR_PATH + "/newFolder")
         sleep(0.3)
-        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
-        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 
     # couldn't model a user deletion of a non-empty folder, but tested for it manually and it works as well.
     def test_client_monitoring_and_detect_delete_non_empty_folder_and_updates_server(self):
@@ -121,8 +111,7 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         fsu.deleteDir(DIR_PATH + "/newFolder")
         sleep(0.5)
-        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
-        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 
     def test_client_monitoring_and_detect_file_moved_and_updates_server(self):
         print("TEST {}: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(
@@ -135,8 +124,7 @@ class MyTestCase(unittest.TestCase):
         sleep(0.1)
         fsu.move(DIR_PATH + "/newFile", DIR_PATH + "/newFolder/newFile")
         sleep(0.5)
-        self.serverFolderCopy = self.server.getClient(self.client.accessToken).folderLocalCopyRoot
-        assert_that(fsu.areDirsIdentical(DIR_PATH, self.serverFolderCopy), is_(True))
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 
     def tearDown(self):
         self.client.stopMonitoring()
@@ -150,6 +138,10 @@ class MyTestCase(unittest.TestCase):
 
     def startMonitoringThread(self):
         threading.Thread(name="monitor-thread", target=self.client.startMonitoring, daemon=True).start()
+
+    def getClientFolder(self):
+        self.serverFolderCopy = self.server.getClientFolder(self.client.accessToken)
+        return self.serverFolderCopy
 
 
 if __name__ == '__main__':
