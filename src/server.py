@@ -42,10 +42,10 @@ class RequestHandler:
 
     def uploadFolder(self):
         print("[REQUEST HANDLER]: please enter access token")
-        accessToken = self.communicator.readFromClient()
-        if accessToken in self.server.clients:
-            self.client = self.server.clients[accessToken]
+        client_accessToken = self.communicator.readFromClient()
+        if self.server.isClientExists(client_accessToken):
             print("[REQUEST HANDLER]: access approved!")
+            self.client = self.server.getClient(client_accessToken)
             print('[REQUEST HANDLER]: client root: ', self.client.folderPathOnClientDevice)
             print('[REQUEST HANDLER]: uploading...')
             msg = self.communicator.readFromClient()
@@ -65,10 +65,10 @@ class RequestHandler:
 
     def created(self):
         print("[REQUEST HANDLER]: please enter access token")
-        accessToken = self.communicator.readFromClient()
-        if accessToken in self.server.clients:
+        client_accessToken = self.communicator.readFromClient()
+        if self.server.isClientExists(client_accessToken):
             print("[REQUEST HANDLER]: access approved!")
-            self.client = self.server.clients[accessToken]
+            self.client = self.server.getClient(client_accessToken)
             msg = self.communicator.readFromClient()
             while msg != DONE:
                 event = Parser.convertMsgToEvent(msg)
@@ -87,10 +87,10 @@ class RequestHandler:
 
     def deleted(self):
         print("[REQUEST HANDLER]: please enter access token")
-        accessToken = self.communicator.readFromClient()
-        if accessToken in self.server.clients:
+        client_accessToken = self.communicator.readFromClient()
+        if self.server.isClientExists(client_accessToken):
             print("[REQUEST HANDLER]: access approved!")
-            self.client = self.server.clients[accessToken]
+            self.client = self.server.getClient(client_accessToken)
             msg = self.communicator.readFromClient()
             while msg != DONE:
                 event = Parser.convertMsgToEvent(msg)
@@ -112,10 +112,10 @@ class RequestHandler:
 
     def moved(self):
         print("[REQUEST HANDLER]: please enter access token")
-        accessToken = self.communicator.readFromClient()
-        if accessToken in self.server.clients:
+        client_accessToken = self.communicator.readFromClient()
+        if self.server.isClientExists(client_accessToken):
             print("[REQUEST HANDLER]: access approved!")
-            self.client = self.server.clients[accessToken]
+            self.client = self.server.getClient(client_accessToken)
             msg = self.communicator.readFromClient()
             while msg != DONE:
                 event = Parser.convertMsgToEvent(msg)
@@ -164,6 +164,10 @@ class TCPServer:
 
     def getClientFolder(self, accessToken):
         return self.clients[accessToken].folder
+
+    def isClientExists(self, client_accessToken):
+        return client_accessToken in self.clients.keys()
+
 
     def addClient(self, accessToken, deviceId, folderPathOnClientDevice):
         clientFolder = "client_" + generateToken(size=5)
