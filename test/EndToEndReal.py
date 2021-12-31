@@ -1,12 +1,9 @@
-import os
 import threading
 import unittest
 from time import sleep
 from hamcrest import *
-import filecmp
-
 from src.util import FileSystemUtils
-from src.client import TCPClient, FolderMonitor, EventHandler
+from src.client import TCPClient
 from src.server import TCPServer
 
 DIR_PATH = "/home/yaron/Desktop/watched"
@@ -103,7 +100,7 @@ class MyTestCase(unittest.TestCase):
 
     # couldn't model a user deletion of a non-empty folder, but tested for it manually and it works as well.
     def test_client_monitoring_and_detect_delete_non_empty_folder_and_updates_server(self):
-        print("TEST {}: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(
+        print("TEST {}: DELETE NON-EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(
             counter.inc()))
         fsu.createNonEmptyFolder(DIR_PATH + "/newFolder", 1)
         self.client.uploadFolder()
@@ -114,7 +111,7 @@ class MyTestCase(unittest.TestCase):
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 
     def test_client_monitoring_and_detect_file_moved_and_updates_server(self):
-        print("TEST {}: DELETE EMPTY-FOLDER IN MONITORED FOLDER\n________________________________________\n".format(
+        print("TEST {}: FILE MOVED IN MONITORED FOLDER\n________________________________________\n".format(
             counter.inc()))
         # creates new folder and a file in it in the monitored folder
         fsu.createFolder(DIR_PATH + "/newFolder")
@@ -123,6 +120,19 @@ class MyTestCase(unittest.TestCase):
         self.startMonitoringThread()
         sleep(0.1)
         fsu.move(DIR_PATH + "/newFile", DIR_PATH + "/newFolder/newFile")
+        sleep(0.5)
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
+
+    def test_client_monitoring_and_detect_empty_folder_moved_and_updates_server(self):
+        print("TEST {}: EMPTY-FOLDER MOVED IN MONITORED FOLDER\n________________________________________\n".format(
+            counter.inc()))
+        # creates new folder and a file in it in the monitored folder
+        fsu.createFolder(DIR_PATH + "/newFolder")
+        fsu.createFolder(DIR_PATH + "/newFolder2")
+        self.client.uploadFolder()
+        self.startMonitoringThread()
+        sleep(0.1)
+        fsu.move(DIR_PATH + "/newFolder", DIR_PATH + "/newFolder2/newFolder")
         sleep(0.5)
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 

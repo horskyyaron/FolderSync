@@ -114,8 +114,12 @@ class RequestHandler:
                 event = Parser.convertMsgToEvent(msg)
                 localPath_src = Parser.convertClientPathToLocal(self.client, event.src_path)
                 localPath_dst = Parser.convertClientPathToLocal(self.client, event.dest_path)
-                os.replace(localPath_src, localPath_dst)
-                print("[SERVER]: moved file from {} to {}".format(localPath_src, localPath_dst))
+                if event.is_directory:
+                    os.replace(localPath_src, localPath_dst)
+                    print("[SERVER]: moved folder from {} to {}".format(localPath_src, localPath_dst))
+                else:
+                    os.replace(localPath_src, localPath_dst)
+                    print("[SERVER]: moved file from {} to {}".format(localPath_src, localPath_dst))
                 msg = self.communicator.readFromClient()
             self.__printRequestCompletedMsg(MOVED)
 

@@ -1,16 +1,16 @@
-import os
 import threading
-from time import sleep
-
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+import os
+
+from src.util import FileSystemUtils as fsu
 
 DIR_PATH = "/home/yaron/Desktop/watched"
 
 
 class FakeEventHandler(FileSystemEventHandler):
     def on_any_event(self, event):
-        print(event.event_type)
+        print(event)
 
 
 class FolderMonitor:
@@ -37,12 +37,15 @@ class FolderMonitor:
         self.stop = True
 
 
-os.mkdir(DIR_PATH)
-with open(DIR_PATH + "/file","w") as f:
-    f.write("")
+fsu.createNonEmptyFolder(DIR_PATH, 5)
 
 handler = FakeEventHandler()
 monitor = FolderMonitor(DIR_PATH, handler)
-threading.Thread(target=monitor.start, daemon=True).start()
-while True:
-    pass
+t = threading.Thread(target=monitor.start, name="monitor-thread", daemon=True)
+t.start()
+try:
+    while True:
+        pass
+except KeyboardInterrupt:
+    monitor.stopMonitoring()
+    fsu.deleteDir(DIR_PATH)
