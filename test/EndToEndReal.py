@@ -136,6 +136,23 @@ class MyTestCase(unittest.TestCase):
         sleep(0.5)
         assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
 
+    def test_client_monitoring_and_detect_non_empty_folder_moved_and_updates_server(self):
+        print("TEST {}: NON-EMPTY-FOLDER MOVED IN MONITORED FOLDER\n________________________________________\n".format(
+            counter.inc()))
+        # creates new folder and a file in it in the monitored folder
+        fsu.createFolder(DIR_PATH + "/newFolder")
+        fsu.createFolder(DIR_PATH + "/newFolder/subFolder")
+        fsu.createFolder(DIR_PATH + "/newFolder/subFolder/subsubFolder")
+        fsu.createFile(DIR_PATH + "/newFolder/newFile")
+        fsu.createFile(DIR_PATH + "/newFolder/subFolder/newFile2")
+        fsu.createFolder(DIR_PATH + "/newFolder2")
+        self.client.uploadFolder()
+        self.startMonitoringThread()
+        sleep(20)
+        # fsu.move(DIR_PATH + "/newFolder", DIR_PATH + "/newFolder2/newFolder")
+        sleep(0.5)
+        assert_that(fsu.areDirsIdentical(DIR_PATH, self.getClientFolder()), is_(True))
+
     def tearDown(self):
         self.client.stopMonitoring()
         fsu.deleteDir(self.serverFolderCopy)

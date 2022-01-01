@@ -15,12 +15,25 @@ class EventHandler(FileSystemEventHandler):
         super().__init__()
         self.events = []
         self.tcpClient = None
+        self.movedFolderPath = None
+        self.movedFolderFlag = False
 
     def setTCPClient(self, client):
         self.tcpClient = client
 
     def on_any_event(self, event):
         if self.__isKeyEvent(event):
+            if not self.movedFolderFlag:
+                if event.__class__ == DirMovedEvent and not FileSystemUtils.isEmpty(event.dest_path):
+                    self.movedFolderPath = event.src_path
+                    self.movedFolderFlag = True
+            else:
+                if (
+                        event.__class__ == DirMovedEvent or event.__class__ == FileMovedEvent) and event.dest_path.startswith(
+                        self.movedFolderPath):
+                    return
+                else:
+                    self.movedFolderFlag = False
             self.events.append(event)
             self.notify(event)
 
@@ -145,6 +158,9 @@ class TCPClient:
         self.communicator.sendToServer(MOVED)
         self.communicator.sendToServer(self.accessToken)
         self.communicator.sendToServer(Parser.convertEventToMsg(event))
+        if event.__class__ == DirMovedEvent:
+            folder_status = NON_EMPTY_FOLDER if not FileSystemUtils.isEmpty(event.dest_path) else EMPTY_FOLDER
+            self.communicator.sendToServer(folder_status)
         self.communicator.sendToServer(DONE)
         self.communicator.sendToServer(REQUEST_DONE)
         self.disconnect()

@@ -1,15 +1,17 @@
 import threading
-from watchdog.events import FileSystemEventHandler
+from watchdog.events import FileSystemEventHandler, DirMovedEvent
 from watchdog.observers import Observer
 import os
 
-from src.util import FileSystemUtils as fsu
+from src.util import FileSystemUtils as fsu, FileSystemUtils
 
 DIR_PATH = "/home/yaron/Desktop/watched"
 
 
 class FakeEventHandler(FileSystemEventHandler):
     def on_any_event(self, event):
+        if event.__class__ == DirMovedEvent and not FileSystemUtils.isEmpty(event.dest_path):
+            print("non empty folder moved")
         print(event)
 
 

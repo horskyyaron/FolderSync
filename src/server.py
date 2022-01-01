@@ -52,7 +52,6 @@ class RequestHandler:
             return False
 
     def __printRequestCompletedMsg(self, request):
-        print('[REQUEST HANDLER]: uploading complete!')
         print("[REQUEST HANDLER]: %s request handled" % request)
 
     def uploadFolder(self):
@@ -115,13 +114,23 @@ class RequestHandler:
                 localPath_src = Parser.convertClientPathToLocal(self.client, event.src_path)
                 localPath_dst = Parser.convertClientPathToLocal(self.client, event.dest_path)
                 if event.is_directory:
-                    os.replace(localPath_src, localPath_dst)
-                    print("[SERVER]: moved folder from {} to {}".format(localPath_src, localPath_dst))
+                    self.__folderMoved(localPath_src, localPath_dst)
                 else:
-                    os.replace(localPath_src, localPath_dst)
-                    print("[SERVER]: moved file from {} to {}".format(localPath_src, localPath_dst))
+                    self.__fileMoved(localPath_src, localPath_dst)
                 msg = self.communicator.readFromClient()
             self.__printRequestCompletedMsg(MOVED)
+
+    def __fileMoved(self, src, dst):
+        os.replace(src, dst)
+        print("[SERVER]: moved file from {} to {}".format(src, dst))
+
+    def __folderMoved(self, src, dst):
+        folder_status = self.communicator.readFromClient()
+        if folder_status == EMPTY_FOLDER:
+            os.replace(src, dst)
+        else:
+            FileSystemUtils.moveFolder(src, dst)
+        print("[SERVER]: moved {} from {} to {}".format(folder_status, src, dst))
 
 
 class TCPServer:

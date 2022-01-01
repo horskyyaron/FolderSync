@@ -13,6 +13,8 @@ CREATED = 'CREATED'
 DELETED = 'DELETED'
 MOVED = 'MOVED'
 REQUEST_HANDLED = 'REQUEST_HANDLED'
+NON_EMPTY_FOLDER = 'NON_EMPTY_FOLDER'
+EMPTY_FOLDER = 'EMPTY_FOLDER'
 
 SEPERATOR = '#######'
 FOLDER_TYPE = 'folder'
@@ -220,4 +222,17 @@ class FileSystemUtils:
     def createNonEmptyFolder(path, numOfFiles):
         FileSystemUtils.createFolder(path)
         for i in range(numOfFiles):
-            FileSystemUtils.createFile(path+"/newFile{}".format(i+1))
+            FileSystemUtils.createFile(path + "/newFile{}".format(i + 1))
+
+    @staticmethod
+    def moveFolder(src, dst):
+        FileSystemUtils.createFolder(dst)
+        for root, dirs, files in os.walk(src, topdown=True):
+            for dir in dirs:
+                if not FileSystemUtils.isEmpty(root + "/" + dir):
+                    FileSystemUtils.moveFolder(root + "/" + dir, dst + "/" + dir)
+                else:
+                    FileSystemUtils.move(root + "/" + dir, dst + "/" + dir)
+            for file in files:
+                FileSystemUtils.move(root + "/" + file, dst + "/" + file)
+            FileSystemUtils.deleteDir(root)
